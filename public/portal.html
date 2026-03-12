@@ -328,8 +328,8 @@ tr:hover td{background:rgba(255,255,255,.02);}
     <!-- ADD MEMBER -->
     <div class="page" id="ap-addmember">
       <div class="ptitle">Add Member</div>
-      <div class="psub">Register a new gym member and set their admission date.</div>
-      <div class="card" style="max-width:580px;">
+      <div class="psub">Register a new member, assign their plan and set a login password.</div>
+      <div class="card" style="max-width:600px;">
         <div class="ch"><span class="ct">Member Details</span></div>
         <div style="padding:22px;">
           <div class="mrow">
@@ -346,10 +346,28 @@ tr:hover td{background:rgba(255,255,255,.02);}
             <div class="fg"><label>Gender</label><select id="am_gender"><option>Male</option><option>Female</option><option>Other</option></select></div>
             <div class="fg"><label>Emergency Contact</label><input id="am_emg" placeholder="Phone number"></div>
           </div>
-          <div class="fg"><label>Health Notes</label><input id="am_notes" placeholder="Any remarks"></div>
+          <div class="fg"><label>Health Notes</label><input id="am_notes" placeholder="Any remarks (injuries, goals...)"></div>
           <div class="fg"><label>Payment Status</label><select id="am_pay"><option value="paid">Paid</option><option value="pending">Pending</option></select></div>
+
+          <!-- PASSWORD BOX -->
+          <div style="background:rgba(255,60,0,.07);border:1px solid rgba(255,60,0,.25);border-radius:12px;padding:18px;margin-top:8px;">
+            <div style="font-size:11px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--p);margin-bottom:14px;">🔐 Login Password for Member</div>
+            <div class="mrow" style="margin-bottom:0;">
+              <div class="fg" style="margin-bottom:0;position:relative;">
+                <label>Set Password *</label>
+                <input type="password" id="am_pass" placeholder="Min 6 characters" style="padding-right:42px;">
+                <button type="button" onclick="togglePw('am_pass',this)" style="position:absolute;right:10px;bottom:11px;background:none;border:none;color:var(--mu);cursor:pointer;font-size:15px;padding:0;">👁</button>
+              </div>
+              <div class="fg" style="margin-bottom:0;">
+                <label>Confirm Password *</label>
+                <input type="password" id="am_pass2" placeholder="Repeat password">
+              </div>
+            </div>
+            <div style="margin-top:10px;font-size:12px;color:var(--mu);">💡 Share this password with the member. They can change it anytime from <strong style="color:var(--tx);">Settings → Change Password</strong>.</div>
+          </div>
+
           <div id="amMsg" class="msg"></div>
-          <button class="btn" onclick="addMember()" style="margin-top:14px;">Save Member</button>
+          <button class="btn" onclick="addMember()" style="margin-top:16px;">💾 Save Member</button>
         </div>
       </div>
     </div>
@@ -518,6 +536,24 @@ tr:hover td{background:rgba(255,255,255,.02);}
     <div class="fg"><label>Payment Date</label><input id="rDate" type="date"></div>
     <div class="fg"><label>Payment Status</label><select id="rStatus"><option value="paid">Paid — Confirmed</option><option value="pending">Pending</option></select></div>
     <div class="mfoot"><button class="btn btn-ol" onclick="closeMod('renewMod')">Cancel</button><button class="btn sb gn" style="background:var(--gn)" onclick="confirmRenew()">✓ Confirm Renewal</button></div>
+  </div>
+</div>
+
+
+<!-- DELETE CONFIRM MODAL -->
+<div class="mod" id="delMod">
+  <div class="mbox" style="max-width:400px;text-align:center;">
+    <div style="font-size:52px;margin-bottom:12px;">⚠️</div>
+    <div style="font-family:var(--fd);font-size:26px;font-weight:900;text-transform:uppercase;margin-bottom:10px;">Remove Member?</div>
+    <div style="color:var(--mu);font-size:15px;margin-bottom:6px;">You are about to remove:</div>
+    <div id="delMemberName" style="font-size:20px;font-weight:700;color:var(--rd);margin-bottom:20px;"></div>
+    <div style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:10px;padding:12px 16px;font-size:13px;color:var(--rd);margin-bottom:24px;">
+      This will permanently delete their profile, membership and all related data. This cannot be undone.
+    </div>
+    <div style="display:flex;gap:10px;">
+      <button class="btn btn-ol" onclick="closeMod('delMod')" style="flex:1;">Cancel</button>
+      <button class="btn" id="delConfirmBtn" onclick="confirmDelete()" style="flex:1;background:var(--rd);">🗑️ Yes, Remove</button>
+    </div>
   </div>
 </div>
 
@@ -843,9 +879,15 @@ function renderMembers() {
       <td><div class="abtn">
         <button class="ib" onclick="openEdit('${m.id}')" title="Edit">✏️</button>
         <button class="ib" onclick="openRenew('${m.id}')" title="Renew" style="color:var(--gn)">🔄</button>
-        <button class="ib del" onclick="delMember('${m.id}')" title="Delete">🗑️</button>
+        <button class="ib del" onclick="openDelConfirm('${m.id}','${m.name.replace(/'/g,\'\')}')" title="Remove Member" style="background:rgba(239,68,68,.15);color:var(--rd);border-color:rgba(239,68,68,.3);">🗑️ Remove</button>
       </div></td>
     </tr>`).join('');
+}
+
+function togglePw(inputId, btn) {
+  const inp = document.getElementById(inputId);
+  if (inp.type === 'password') { inp.type = 'text'; btn.textContent = '🙈'; }
+  else { inp.type = 'password'; btn.textContent = '👁'; }
 }
 
 async function addMember() {
@@ -857,12 +899,16 @@ async function addMember() {
   const emergency = document.getElementById('am_emg').value.trim();
   const notes = document.getElementById('am_notes').value.trim();
   const paymentStatus = document.getElementById('am_pay').value;
+  const pass = document.getElementById('am_pass').value;
+  const pass2 = document.getElementById('am_pass2').value;
   if (!name || !phone || !date) return showMsg('amMsg', 'Name, phone and date are required.', 'err');
-  const data = await api('POST', '/api/members', {name, phone, plan, admissionDate:date, gender, emergency, notes, paymentStatus});
+  if (!pass || pass.length < 6) return showMsg('amMsg', 'Password must be at least 6 characters.', 'err');
+  if (pass !== pass2) return showMsg('amMsg', 'Passwords do not match.', 'err');
+  const data = await api('POST', '/api/members', {name, phone, plan, admissionDate:date, gender, emergency, notes, paymentStatus, password:pass});
   if (!data.success) return showMsg('amMsg', data.message, 'err');
-  showMsg('amMsg', data.message, 'ok');
-  floatNotif('✅ Member Added', `${name} — ${PLAN_LABEL[plan]}`, 'ok');
-  ['am_name','am_phone','am_notes','am_emg'].forEach(id => document.getElementById(id).value = '');
+  showMsg('amMsg', '✅ ' + data.message + '  Password: ' + pass, 'ok');
+  floatNotif('✅ Member Added', name + ' — ' + PLAN_LABEL[plan], 'ok');
+  ['am_name','am_phone','am_notes','am_emg','am_pass','am_pass2'].forEach(id => document.getElementById(id).value = '');
   await refreshData();
   renderDashboard(); renderMembers();
 }
@@ -890,12 +936,27 @@ async function saveEdit() {
   await refreshData(); renderMembers(); renderDashboard();
   floatNotif('✏️ Updated', data.member?.name + ' saved', 'info');
 }
-async function delMember(id) {
-  const m = allMembers.find(x => x.id === id);
-  if (!confirm(`Delete ${m?.name}?`)) return;
-  await api('DELETE', `/api/members/${id}`);
+let pendingDeleteId = '';
+function openDelConfirm(id, name) {
+  pendingDeleteId = id;
+  document.getElementById('delMemberName').textContent = name;
+  document.getElementById('delMod').classList.add('open');
+}
+async function confirmDelete() {
+  if (!pendingDeleteId) return;
+  const m = allMembers.find(x => x.id === pendingDeleteId);
+  document.getElementById('delConfirmBtn').textContent = 'Removing...';
+  document.getElementById('delConfirmBtn').disabled = true;
+  await api('DELETE', `/api/members/${pendingDeleteId}`);
+  closeMod('delMod');
+  document.getElementById('delConfirmBtn').textContent = '🗑️ Yes, Remove';
+  document.getElementById('delConfirmBtn').disabled = false;
+  pendingDeleteId = '';
   await refreshData(); renderMembers(); renderDashboard();
-  floatNotif('🗑️ Deleted', 'Member removed', 'warn');
+  floatNotif('🗑️ Removed', (m?.name || 'Member') + ' has been deleted', 'warn');
+}
+async function delMember(id) {
+  openDelConfirm(id, allMembers.find(x=>x.id===id)?.name || id);
 }
 
 let renewId = '';

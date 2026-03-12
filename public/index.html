@@ -1415,10 +1415,55 @@ footer {
     </a>
   </div>
 
-  <!-- LightWidget Real Instagram Feed -->
-  <div class="lightwidget-wrap">
+  <!-- ─── LightWidget embed ─── -->
+  <!-- SETUP STEPS (one time, free):
+       1. Go to https://lightwidget.com  →  Sign Up (free)
+       2. Connect your Instagram account @gymlover_govindshukla70
+       3. Choose grid layout, copy the widget code they give you
+       4. Paste it here replacing the iframe below (keep the outer div)
+  -->
+  <div class="lightwidget-wrap" id="lwContainer">
     <script src="https://cdn.lightwidget.com/widgets/lightwidget.js"></script>
-    <iframe src="//lightwidget.com/widgets/918ad6624cb657af8c6c32c000c66501.html" scrolling="no" allowtransparency="true" class="lightwidget-widget" style="width:100%;border:0;overflow:hidden;min-height:420px;border-radius:16px;"></iframe>
+    <iframe
+      id="lwFrame"
+      src="//lightwidget.com/widgets/YOUR_WIDGET_ID_HERE.html"
+      scrolling="no"
+      allowtransparency="true"
+      class="lightwidget-widget"
+      style="width:100%;border:0;overflow:hidden;min-height:420px;border-radius:16px;"
+      onload="checkLW(this)"
+      onerror="showInstaFallback()">
+    </iframe>
+  </div>
+
+  <!-- Fallback card shown until LightWidget is set up -->
+  <div id="instaFallback" style="display:none; border:1px solid var(--surface-border); border-radius:20px; overflow:hidden; background:var(--surface);">
+    <div style="padding:52px 40px; text-align:center;">
+      <div style="width:72px;height:72px;background:linear-gradient(135deg,#833ab4,#fd1d1d,#fcb045);border-radius:20px;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;">
+        <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1.2" fill="white" stroke="none"/></svg>
+      </div>
+      <h3 style="font-family:var(--font-display);font-size:32px;font-weight:900;text-transform:uppercase;margin-bottom:14px;">@gymlover_govindshukla70</h3>
+      <p style="color:var(--text-muted);font-size:15px;line-height:1.7;max-width:480px;margin:0 auto 32px;">Follow us on Instagram for daily workout videos, transformation stories, motivational content and live gym session highlights!</p>
+
+      <!-- Animated preview tiles -->
+      <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-bottom:36px;">
+        <div style="aspect-ratio:1;border-radius:10px;background:linear-gradient(135deg,#1a0500,#3d1200);display:flex;align-items:center;justify-content:center;font-size:28px;animation:tileIn .4s .1s ease both;">💪</div>
+        <div style="aspect-ratio:1;border-radius:10px;background:linear-gradient(135deg,#0a0a1a,#1a0033);display:flex;align-items:center;justify-content:center;font-size:28px;animation:tileIn .4s .2s ease both;">🏋️</div>
+        <div style="aspect-ratio:1;border-radius:10px;background:linear-gradient(135deg,#1a0500,#3d1200);display:flex;align-items:center;justify-content:center;font-size:28px;animation:tileIn .4s .3s ease both;">🔥</div>
+        <div style="aspect-ratio:1;border-radius:10px;background:linear-gradient(135deg,#001a0a,#003320);display:flex;align-items:center;justify-content:center;font-size:28px;animation:tileIn .4s .4s ease both;">🥗</div>
+        <div style="aspect-ratio:1;border-radius:10px;background:linear-gradient(135deg,#1a0500,#3d1200);display:flex;align-items:center;justify-content:center;font-size:28px;animation:tileIn .4s .5s ease both;">⚡</div>
+        <div style="aspect-ratio:1;border-radius:10px;background:linear-gradient(135deg,#1a0a00,#2d1500);display:flex;align-items:center;justify-content:center;font-size:28px;animation:tileIn .4s .6s ease both;">🏆</div>
+      </div>
+
+      <a href="https://instagram.com/gymlover_govindshukla70" target="_blank"
+        style="display:inline-flex;align-items:center;gap:10px;padding:14px 32px;border-radius:100px;text-decoration:none;font-weight:700;font-size:16px;
+               background:linear-gradient(135deg,#833ab4,#fd1d1d,#fcb045);color:white;transition:transform .2s,box-shadow .2s;"
+        onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 16px 40px rgba(253,29,29,.4)'"
+        onmouseout="this.style.transform='';this.style.boxShadow=''">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1.2" fill="white" stroke="none"/></svg>
+        Open Instagram Profile
+      </a>
+    </div>
   </div>
 </section>
 
@@ -1935,6 +1980,33 @@ function sendChat() {
   addChatMsg('You 👤', val);
   input.value = '';
 }
+
+
+// ─── LIGHTWIDGET CHECK ────────────────────────────────
+function checkLW(iframe) {
+  try {
+    // If iframe src still has placeholder, show fallback
+    if (iframe.src.includes('YOUR_WIDGET_ID_HERE')) { showInstaFallback(); return; }
+    // Check if iframe loaded something real after short delay
+    setTimeout(() => {
+      try {
+        const h = iframe.contentWindow.document.body.innerHTML;
+        if (!h || h.length < 50) showInstaFallback();
+      } catch(e) { /* cross-origin is fine — widget loaded OK */ }
+    }, 3000);
+  } catch(e) { showInstaFallback(); }
+}
+function showInstaFallback() {
+  const lw = document.getElementById('lwContainer');
+  const fb = document.getElementById('instaFallback');
+  if (lw) lw.style.display = 'none';
+  if (fb) fb.style.display = 'block';
+}
+// Auto-show fallback if widget ID is placeholder
+(function(){ 
+  const f = document.getElementById('lwFrame');
+  if (f && f.src.includes('YOUR_WIDGET_ID_HERE')) showInstaFallback();
+})();
 
 // ─── PAYMENT ──────────────────────────────────────────────
 function payNow(){
