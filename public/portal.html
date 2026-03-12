@@ -1,0 +1,1171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Brothers Gym — Portal</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;700;800;900&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+:root{--p:#ff3c00;--pd:rgba(255,60,0,0.12);--pg:rgba(255,60,0,0.35);--bg:#090b0f;--sf:rgba(255,255,255,0.04);--sf2:rgba(255,255,255,0.07);--br:rgba(255,255,255,0.08);--tx:#f0f0f0;--mu:#7a7f8a;--gn:#22c55e;--yw:#eab308;--rd:#ef4444;--bl:#3b82f6;--fd:'Barlow Condensed',sans-serif;--fb:'Barlow',sans-serif;}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{background:var(--bg);color:var(--tx);font-family:var(--fb);overflow-x:hidden;min-height:100vh;}
+canvas#bg3d{position:fixed;top:0;left:0;z-index:0;pointer-events:none;}
+.view{display:none;position:relative;z-index:1;min-height:100vh;}
+.view.active{display:flex;}
+
+/* AUTH */
+#authView{align-items:center;justify-content:center;padding:20px;}
+.auth-box{background:rgba(12,14,20,0.97);border:1px solid var(--br);border-radius:20px;padding:40px;width:100%;max-width:420px;backdrop-filter:blur(20px);}
+.auth-logo{font-family:var(--fd);font-size:28px;font-weight:900;color:var(--p);text-align:center;letter-spacing:1px;text-transform:uppercase;}
+.auth-logo small{display:block;font-family:var(--fb);font-size:11px;font-weight:400;color:var(--mu);letter-spacing:3px;text-transform:uppercase;margin-top:2px;}
+.auth-tabs{display:flex;margin:22px 0 26px;border:1px solid var(--br);border-radius:10px;overflow:hidden;}
+.auth-tab{flex:1;background:none;border:none;color:var(--mu);font-family:var(--fb);font-size:14px;font-weight:600;padding:11px;cursor:pointer;transition:.2s;}
+.auth-tab.active{background:var(--p);color:white;}
+.fg{margin-bottom:15px;}
+.fg label{display:block;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--mu);margin-bottom:7px;}
+.fg input,.fg select{width:100%;background:rgba(255,255,255,.05);border:1px solid var(--br);border-radius:8px;color:var(--tx);font-family:var(--fb);font-size:15px;padding:12px 14px;outline:none;transition:border-color .2s;}
+.fg input:focus,.fg select:focus{border-color:var(--p);}
+.fg input::placeholder{color:var(--mu);}
+.fg select option{background:#1a1d24;}
+.otp-row{display:flex;gap:8px;}
+.otp-row input{flex:1;text-align:center;font-size:22px;font-weight:700;letter-spacing:6px;}
+.otp-btn{background:var(--p);color:white;border:none;border-radius:8px;padding:0 16px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;transition:.2s;min-width:90px;}
+.otp-btn:disabled{background:#444;cursor:not-allowed;}
+.otp-btn.sending{background:#666;}
+.btn{width:100%;background:var(--p);color:white;border:none;border-radius:8px;font-family:var(--fd);font-size:18px;font-weight:800;letter-spacing:1px;text-transform:uppercase;padding:14px;cursor:pointer;transition:.2s;margin-top:6px;}
+.btn:hover:not(:disabled){background:#e03500;transform:translateY(-2px);}
+.btn:disabled{background:#444;cursor:not-allowed;}
+.btn-ol{background:none;border:1px solid var(--br);color:var(--tx);}
+.btn-ol:hover{border-color:var(--p);color:var(--p);background:none !important;transform:none !important;}
+.msg{padding:10px 14px;border-radius:8px;font-size:13px;margin-top:10px;display:none;line-height:1.5;}
+.msg.ok{background:rgba(34,197,94,.15);border:1px solid rgba(34,197,94,.3);color:var(--gn);}
+.msg.err{background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);color:var(--rd);}
+.msg.info{background:var(--pd);border:1px solid rgba(255,60,0,.3);color:var(--p);}
+.divider{display:flex;align-items:center;gap:12px;margin:18px 0;color:var(--mu);font-size:12px;}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--br);}
+.link{color:var(--p);cursor:pointer;text-decoration:none;}
+.link:hover{text-decoration:underline;}
+.hint{text-align:center;font-size:13px;color:var(--mu);margin-top:12px;}
+
+/* LAYOUT */
+#adminView,#memberView{flex-direction:row;}
+.sidebar{width:240px;min-height:100vh;background:rgba(9,11,15,.98);border-right:1px solid var(--br);display:flex;flex-direction:column;padding:20px 0;position:fixed;top:0;left:0;z-index:200;transition:transform .3s;}
+.slogo{font-family:var(--fd);font-size:19px;font-weight:900;color:var(--p);padding:0 20px 18px;border-bottom:1px solid var(--br);margin-bottom:10px;letter-spacing:1px;text-transform:uppercase;line-height:1.2;}
+.slogo small{display:block;font-family:var(--fb);font-size:10px;font-weight:400;color:var(--mu);letter-spacing:2px;}
+.ni{display:flex;align-items:center;gap:11px;padding:11px 20px;color:var(--mu);font-size:14px;font-weight:500;cursor:pointer;transition:.2s;border-left:3px solid transparent;}
+.ni:hover{color:var(--tx);background:var(--sf);}
+.ni.on{color:var(--p);background:var(--pd);border-left-color:var(--p);}
+.ni .ico{font-size:17px;width:22px;text-align:center;}
+.nbadge{margin-left:auto;background:var(--p);color:white;font-size:10px;font-weight:700;padding:2px 7px;border-radius:100px;}
+.sfooter{margin-top:auto;padding:14px 20px;border-top:1px solid var(--br);}
+.suser{font-size:13px;color:var(--mu);margin-bottom:10px;}
+.suser strong{display:block;color:var(--tx);font-size:14px;}
+.lout{background:none;border:1px solid var(--br);color:var(--mu);font-family:var(--fb);font-size:13px;padding:8px;border-radius:6px;cursor:pointer;width:100%;transition:.2s;}
+.lout:hover{border-color:var(--rd);color:var(--rd);}
+.main{margin-left:240px;flex:1;padding:28px 30px;min-height:100vh;}
+.page{display:none;}.page.on{display:block;}
+.ptitle{font-family:var(--fd);font-size:38px;font-weight:900;text-transform:uppercase;letter-spacing:-.5px;margin-bottom:4px;}
+.psub{color:var(--mu);font-size:14px;margin-bottom:26px;}
+
+/* STATS */
+.srow{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px;}
+.sc{background:var(--sf);border:1px solid var(--br);border-radius:14px;padding:18px 20px;transition:.3s;}
+.sc:hover{border-color:rgba(255,60,0,.3);transform:translateY(-3px);}
+.sc .ico2{font-size:26px;margin-bottom:8px;}
+.sc .val{font-family:var(--fd);font-size:34px;font-weight:900;line-height:1;}
+.sc .lbl{font-size:11px;color:var(--mu);letter-spacing:1px;text-transform:uppercase;margin-top:3px;}
+.sc.gn .val{color:var(--gn);}.sc.yw .val{color:var(--yw);}.sc.rd .val{color:var(--rd);}.sc.or .val{color:var(--p);}
+
+/* CARD / TABLE */
+.card{background:var(--sf);border:1px solid var(--br);border-radius:14px;overflow:hidden;margin-bottom:22px;}
+.ch{display:flex;align-items:center;justify-content:space-between;padding:15px 20px;border-bottom:1px solid var(--br);}
+.ct{font-family:var(--fd);font-size:19px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;}
+.ca{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+.sb{background:var(--p);color:white;border:none;border-radius:7px;font-family:var(--fd);font-size:13px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;padding:8px 16px;cursor:pointer;transition:.2s;white-space:nowrap;}
+.sb:hover{background:#e03500;}
+.sb.gn{background:var(--gn);}.sb.gn:hover{background:#16a34a;}
+.sb.ol{background:none;border:1px solid var(--br);color:var(--tx);}.sb.ol:hover{border-color:var(--p);color:var(--p);}
+.srch{background:rgba(255,255,255,.05);border:1px solid var(--br);border-radius:7px;color:var(--tx);font-family:var(--fb);font-size:13px;padding:8px 14px;outline:none;width:210px;}
+.srch:focus{border-color:var(--p);}
+table{width:100%;border-collapse:collapse;}
+th{font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--mu);padding:11px 18px;text-align:left;border-bottom:1px solid var(--br);}
+td{padding:13px 18px;font-size:14px;border-bottom:1px solid rgba(255,255,255,.04);vertical-align:middle;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:rgba(255,255,255,.02);}
+.badge{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;padding:3px 9px;border-radius:100px;}
+.badge.active{background:rgba(34,197,94,.15);color:var(--gn);}
+.badge.expiring{background:rgba(234,179,8,.15);color:var(--yw);}
+.badge.expired{background:rgba(239,68,68,.15);color:var(--rd);}
+.badge.paid{background:rgba(59,130,246,.15);color:var(--bl);}
+.badge.pending{background:rgba(234,179,8,.15);color:var(--yw);}
+.abtn{display:flex;gap:5px;}
+.ib{background:var(--sf2);border:none;color:var(--mu);font-size:13px;padding:5px 9px;border-radius:6px;cursor:pointer;transition:.2s;}
+.ib:hover{background:var(--pd);color:var(--p);}
+.ib.del:hover{background:rgba(239,68,68,.15);color:var(--rd);}
+
+/* MODAL */
+.mbg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);backdrop-filter:blur(8px);z-index:500;align-items:center;justify-content:center;padding:20px;}
+.mbg.open{display:flex;}
+.modal{background:#0e1118;border:1px solid var(--br);border-radius:18px;padding:30px;width:100%;max-width:500px;max-height:90vh;overflow-y:auto;}
+.mtitle{font-family:var(--fd);font-size:24px;font-weight:900;text-transform:uppercase;margin-bottom:20px;}
+.mrow{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.mfoot{display:flex;gap:10px;margin-top:18px;}
+.mfoot button{flex:1;}
+.xbtn{float:right;background:none;border:none;color:var(--mu);font-size:22px;cursor:pointer;line-height:1;transition:.2s;}
+.xbtn:hover{color:var(--rd);}
+
+/* NOTIFS */
+.nit{display:flex;gap:12px;padding:14px 18px;border-bottom:1px solid rgba(255,255,255,.04);transition:.2s;cursor:pointer;}
+.nit:hover{background:var(--sf2);}
+.nit:last-child{border-bottom:none;}
+.nit.unread{background:var(--pd);}
+.nico{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+.nico.warn{background:rgba(234,179,8,.15);}.nico.danger{background:rgba(239,68,68,.15);}.nico.success{background:rgba(34,197,94,.15);}.nico.info{background:var(--pd);}
+.nbody{flex:1;}
+.ntitle{font-size:14px;font-weight:600;margin-bottom:2px;}
+.ndesc{font-size:13px;color:var(--mu);}
+.ntime{font-size:11px;color:var(--mu);margin-top:2px;}
+
+/* LIVE */
+.lw{display:grid;grid-template-columns:1fr 300px;gap:14px;}
+.lscreen{position:relative;background:#0a0c10;border:1px solid var(--br);border-radius:14px;overflow:hidden;aspect-ratio:16/9;display:flex;align-items:center;justify-content:center;}
+.lph{text-align:center;padding:40px;display:flex;flex-direction:column;align-items:center;gap:11px;}
+.lph h3{font-family:var(--fd);font-size:26px;font-weight:900;text-transform:uppercase;}
+.lph p{color:var(--mu);font-size:14px;line-height:1.6;max-width:300px;}
+.lpulse{width:80px;height:80px;border-radius:50%;border:2px solid var(--p);position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);animation:pls 2s ease infinite;pointer-events:none;}
+@keyframes pls{0%{transform:translate(-50%,-50%) scale(1);opacity:.7}100%{transform:translate(-50%,-50%) scale(2.5);opacity:0}}
+.lbadge{position:absolute;top:12px;left:12px;display:flex;align-items:center;gap:7px;background:rgba(0,0,0,.65);backdrop-filter:blur(8px);padding:5px 14px;border-radius:100px;}
+.ldot{width:9px;height:9px;background:var(--p);border-radius:50%;animation:blk 1s ease infinite;}
+@keyframes blk{0%,100%{opacity:1}50%{opacity:.2}}
+.ltimer{position:absolute;top:12px;right:12px;background:rgba(0,0,0,.65);backdrop-filter:blur(8px);padding:5px 14px;border-radius:100px;font-family:var(--fd);font-size:15px;font-weight:700;letter-spacing:2px;}
+.lctrl{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);display:flex;gap:10px;background:rgba(0,0,0,.65);backdrop-filter:blur(10px);padding:9px 18px;border-radius:100px;border:1px solid var(--br);}
+.lcb{background:rgba(255,255,255,.1);border:none;color:white;font-size:17px;padding:7px 12px;border-radius:8px;cursor:pointer;transition:.2s;}
+.lcb:hover{background:rgba(255,255,255,.2);}
+.lcb.stop{background:rgba(255,60,0,.3);}.lcb.stop:hover{background:rgba(255,60,0,.6);}
+.cpanel{background:var(--sf);border:1px solid var(--br);border-radius:14px;display:flex;flex-direction:column;overflow:hidden;}
+.chead{padding:12px 16px;border-bottom:1px solid var(--br);display:flex;justify-content:space-between;align-items:center;font-weight:600;font-size:14px;}
+.conl{font-size:12px;color:var(--gn);}
+.cmsgs{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:8px;min-height:280px;max-height:380px;}
+.cmsgs::-webkit-scrollbar{width:3px;}
+.cmsg{display:flex;align-items:flex-start;gap:8px;}
+.cav{font-size:17px;flex-shrink:0;}
+.cname{display:block;font-size:11px;font-weight:700;color:var(--p);margin-bottom:2px;}
+.ctxt{display:block;font-size:13px;color:var(--tx);line-height:1.5;}
+.cinp{display:flex;gap:8px;padding:10px 12px;border-top:1px solid var(--br);}
+.cinp input{flex:1;background:rgba(255,255,255,.05);border:1px solid var(--br);border-radius:7px;color:var(--tx);font-family:var(--fb);font-size:13px;padding:8px 12px;outline:none;}
+.cinp input:focus{border-color:var(--p);}
+.cinp button{background:var(--p);border:none;color:white;font-size:15px;padding:8px 12px;border-radius:7px;cursor:pointer;}
+
+/* MEMBER CARDS */
+.mprofile{background:linear-gradient(135deg,rgba(255,60,0,.12),rgba(255,60,0,.04));border:1px solid rgba(255,60,0,.25);border-radius:16px;padding:26px;margin-bottom:22px;display:flex;align-items:center;gap:22px;}
+.mavatar{width:68px;height:68px;border-radius:50%;background:var(--p);display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:900;font-family:var(--fd);color:white;flex-shrink:0;}
+.mname{font-family:var(--fd);font-size:30px;font-weight:900;text-transform:uppercase;letter-spacing:-.5px;}
+.mid{font-size:12px;color:var(--mu);letter-spacing:2px;text-transform:uppercase;margin-bottom:6px;}
+.mpill{display:inline-block;background:var(--pd);color:var(--p);font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;padding:3px 11px;border-radius:100px;border:1px solid rgba(255,60,0,.2);}
+.memprog{background:var(--sf);border:1px solid var(--br);border-radius:14px;padding:22px;margin-bottom:22px;}
+.pbar{height:8px;background:rgba(255,255,255,.08);border-radius:100px;overflow:hidden;}
+.pfill{height:100%;background:linear-gradient(90deg,var(--p),#ff7300);border-radius:100px;transition:width .6s ease;}
+.pfill.warn{background:linear-gradient(90deg,var(--yw),#f59e0b);}
+.pfill.danger{background:linear-gradient(90deg,var(--rd),#dc2626);}
+.dleft{font-family:var(--fd);font-size:40px;font-weight:900;color:var(--p);line-height:1;}
+.dleft.warn{color:var(--yw);}.dleft.danger{color:var(--rd);}
+.payrow{display:flex;align-items:center;justify-content:space-between;padding:13px 18px;border-bottom:1px solid rgba(255,255,255,.04);}
+.payrow:last-child{border-bottom:none;}
+.payico{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:15px;background:rgba(34,197,94,.12);flex-shrink:0;}
+.payamt{font-family:var(--fd);font-size:20px;font-weight:900;color:var(--gn);}
+
+/* FLOAT NOTIF */
+.fn-wrap{position:fixed;top:18px;right:18px;z-index:9000;display:flex;flex-direction:column;gap:9px;pointer-events:none;}
+.fn{background:#0f1219;border-left:4px solid var(--p);border-radius:10px;padding:13px 17px;min-width:280px;max-width:340px;box-shadow:0 10px 40px rgba(0,0,0,.5);transform:translateX(400px);transition:transform .4s ease;pointer-events:all;}
+.fn.show{transform:translateX(0);}
+.fn.warn{border-color:var(--yw);}.fn.danger{border-color:var(--rd);}.fn.ok{border-color:var(--gn);}
+.fntitle{font-size:14px;font-weight:700;margin-bottom:2px;}
+.fndesc{font-size:13px;color:var(--mu);}
+
+/* MISC */
+::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar-track{background:var(--bg);}
+::-webkit-scrollbar-thumb{background:#333;border-radius:4px;}
+::-webkit-scrollbar-thumb:hover{background:var(--p);}
+.loading{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:white;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.empty{padding:36px;text-align:center;color:var(--mu);font-size:14px;}
+
+/* RESPONSIVE */
+@media(max-width:900px){
+  .sidebar{transform:translateX(-100%);}
+  .sidebar.open{transform:translateX(0);}
+  .main{margin-left:0;padding:16px;}
+  .srow{grid-template-columns:1fr 1fr;}
+  .lw{grid-template-columns:1fr;}
+  .mrow{grid-template-columns:1fr;}
+}
+.hbg{display:none;position:fixed;top:14px;left:14px;z-index:300;background:var(--sf);border:1px solid var(--br);border-radius:8px;padding:7px 10px;cursor:pointer;flex-direction:column;gap:5px;}
+.hbg span{display:block;width:22px;height:2px;background:var(--tx);border-radius:2px;}
+@media(max-width:900px){.hbg{display:flex;}}
+.ovlay{display:none;position:fixed;inset:0;z-index:99;background:rgba(0,0,0,.5);}
+.ovlay.show{display:block;}
+</style>
+</head>
+<body>
+<canvas id="bg3d"></canvas>
+<div class="fn-wrap" id="fnWrap"></div>
+<div class="hbg" id="hbg" onclick="toggleSb()"><span></span><span></span><span></span></div>
+<div class="ovlay" id="ovlay" onclick="toggleSb()"></div>
+
+<!-- ══════════════ AUTH ══════════════ -->
+<div class="view active" id="authView">
+  <div class="auth-box">
+    <div class="auth-logo">The Brothers Gym<small>Member &amp; Admin Portal</small></div>
+    <div class="auth-tabs">
+      <button class="auth-tab active" onclick="aTab('login')">Login</button>
+      <button class="auth-tab" onclick="aTab('signup')">Sign Up</button>
+    </div>
+
+    <!-- LOGIN -->
+    <div id="fLogin">
+      <div class="fg"><label>Phone Number</label><input id="lPhone" type="tel" placeholder="98765 43210" oninput="cleanPhone(this)"></div>
+      <div class="fg"><label>Password</label><input id="lPass" type="password" placeholder="Enter password" onkeydown="if(event.key==='Enter')doLogin()"></div>
+      <div id="lMsg" class="msg"></div>
+      <button class="btn" id="lBtn" onclick="doLogin()">Login</button>
+      <p class="hint">Forgot password? <a class="link" onclick="aTab('forgot')">Reset it</a></p>
+    </div>
+
+    <!-- SIGNUP -->
+    <div id="fSignup" style="display:none;">
+      <div class="fg"><label>Full Name</label><input id="sName" placeholder="Rahul Kumar"></div>
+      <div class="fg">
+        <label>Phone Number</label>
+        <div class="otp-row">
+          <input id="sPhone" type="tel" placeholder="98765 43210" oninput="cleanPhone(this)">
+          <button class="otp-btn" id="sOtpBtn" onclick="sendOTP('signup')">Send OTP</button>
+        </div>
+      </div>
+      <div class="fg" id="sOtpGroup" style="display:none;">
+        <label>Enter OTP <span id="sOtpTimer" style="color:var(--yw);margin-left:8px;"></span></label>
+        <input id="sOTP" type="text" placeholder="• • • • • •" maxlength="6" style="text-align:center;font-size:22px;font-weight:700;letter-spacing:6px;" oninput="onOTPInput('signup')">
+        <div id="sOtpHint" class="msg info" style="display:block;margin-top:7px;font-size:12px;"></div>
+      </div>
+      <div id="sPwGroups" style="display:none;">
+        <div class="fg"><label>Create Password</label><input id="sPw" type="password" placeholder="Min 6 characters"></div>
+        <div class="fg"><label>Confirm Password</label><input id="sPw2" type="password" placeholder="Repeat password" onkeydown="if(event.key==='Enter')doSignup()"></div>
+      </div>
+      <div id="sMsg" class="msg"></div>
+      <button class="btn" id="sBtn" onclick="doSignup()" style="display:none;">Create Account</button>
+    </div>
+
+    <!-- FORGOT -->
+    <div id="fForgot" style="display:none;">
+      <div class="fg">
+        <label>Phone Number</label>
+        <div class="otp-row">
+          <input id="fpPhone" type="tel" placeholder="98765 43210" oninput="cleanPhone(this)">
+          <button class="otp-btn" id="fpOtpBtn" onclick="sendOTP('forgot')">Send OTP</button>
+        </div>
+      </div>
+      <div class="fg" id="fpOtpGroup" style="display:none;">
+        <label>OTP <span id="fpOtpTimer" style="color:var(--yw);margin-left:8px;"></span></label>
+        <input id="fpOTP" type="text" placeholder="• • • • • •" maxlength="6" style="text-align:center;font-size:22px;font-weight:700;letter-spacing:6px;" oninput="onOTPInput('forgot')">
+        <div id="fpOtpHint" class="msg info" style="display:block;margin-top:7px;font-size:12px;"></div>
+      </div>
+      <div id="fpPwGroup" style="display:none;">
+        <div class="fg"><label>New Password</label><input id="fpPw" type="password" placeholder="New password (min 6 chars)" onkeydown="if(event.key==='Enter')doReset()"></div>
+      </div>
+      <div id="fpMsg" class="msg"></div>
+      <button class="btn" id="fpBtn" onclick="doReset()" style="display:none;">Reset Password</button>
+      <p class="hint"><a class="link" onclick="aTab('login')">← Back to Login</a></p>
+    </div>
+
+    <div class="divider">or</div>
+    <p class="hint"><a class="link" onclick="openAdminModal()">🔐 Admin Login</a></p>
+  </div>
+</div>
+
+<!-- ══════════════ ADMIN VIEW ══════════════ -->
+<div class="view" id="adminView">
+  <div class="sidebar" id="aSb">
+    <div class="slogo">Admin Panel<small>Brothers Gym</small></div>
+    <div class="ni on" onclick="aPage('dashboard')"><span class="ico">📊</span> Dashboard</div>
+    <div class="ni" onclick="aPage('members')"><span class="ico">👥</span> Members <span class="nbadge" id="expBadge" style="display:none;">0</span></div>
+    <div class="ni" onclick="aPage('addmember')"><span class="ico">➕</span> Add Member</div>
+    <div class="ni" onclick="aPage('payments')"><span class="ico">💳</span> Payments</div>
+    <div class="ni" onclick="aPage('notifs')"><span class="ico">🔔</span> Notifications <span class="nbadge" id="aNBadge" style="display:none;">0</span></div>
+    <div class="ni" onclick="aPage('live')"><span class="ico">🔴</span> Go Live</div>
+    <div class="sfooter">
+      <div class="suser"><strong>Admin</strong>Brothers Gym Owner</div>
+      <button class="lout" onclick="doLogout()">Logout</button>
+    </div>
+  </div>
+  <div class="main">
+
+    <!-- DASHBOARD -->
+    <div class="page on" id="ap-dashboard">
+      <div class="ptitle">Dashboard</div>
+      <div class="psub" id="dashDate"></div>
+      <div class="srow" id="dashStats"></div>
+      <div class="card"><div class="ch"><span class="ct">⚠️ Expiring Soon (≤7 days)</span></div><table><tbody id="expBody"></tbody></table></div>
+      <div class="card"><div class="ch"><span class="ct">Recent Payments</span></div><table><tbody id="recPayBody"></tbody></table></div>
+    </div>
+
+    <!-- MEMBERS -->
+    <div class="page" id="ap-members">
+      <div class="ptitle">All Members</div>
+      <div class="psub">Manage memberships, view status, collect fees.</div>
+      <div class="card">
+        <div class="ch"><span class="ct">Members</span>
+          <div class="ca">
+            <input class="srch" id="mSrch" placeholder="Search name / phone..." oninput="renderMembers()">
+            <button class="sb" onclick="aPage('addmember')">+ Add Member</button>
+          </div>
+        </div>
+        <table><thead><tr><th>Name</th><th>Phone</th><th>Plan</th><th>Joined</th><th>Expiry</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody id="mBody"></tbody></table>
+      </div>
+    </div>
+
+    <!-- ADD MEMBER -->
+    <div class="page" id="ap-addmember">
+      <div class="ptitle">Add Member</div>
+      <div class="psub">Register a new gym member and set their admission date.</div>
+      <div class="card" style="max-width:580px;">
+        <div class="ch"><span class="ct">Member Details</span></div>
+        <div style="padding:22px;">
+          <div class="mrow">
+            <div class="fg"><label>Full Name *</label><input id="am_name" placeholder="Rahul Kumar"></div>
+            <div class="fg"><label>Phone *</label><input id="am_phone" type="tel" placeholder="98765 43210" oninput="cleanPhone(this)"></div>
+          </div>
+          <div class="mrow">
+            <div class="fg"><label>Admission Date *</label><input id="am_date" type="date"></div>
+            <div class="fg"><label>Membership Plan *</label>
+              <select id="am_plan"><option value="monthly">Monthly — ₹800</option><option value="quarterly">Quarterly — ₹2100</option><option value="annual">Annual — ₹7500</option></select>
+            </div>
+          </div>
+          <div class="mrow">
+            <div class="fg"><label>Gender</label><select id="am_gender"><option>Male</option><option>Female</option><option>Other</option></select></div>
+            <div class="fg"><label>Emergency Contact</label><input id="am_emg" placeholder="Phone number"></div>
+          </div>
+          <div class="fg"><label>Health Notes</label><input id="am_notes" placeholder="Any remarks"></div>
+          <div class="fg"><label>Payment Status</label><select id="am_pay"><option value="paid">Paid</option><option value="pending">Pending</option></select></div>
+          <div id="amMsg" class="msg"></div>
+          <button class="btn" onclick="addMember()" style="margin-top:14px;">Save Member</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAYMENTS -->
+    <div class="page" id="ap-payments">
+      <div class="ptitle">Payments</div><div class="psub">All fee collections and pending dues.</div>
+      <div class="card"><div class="ch"><span class="ct">Payment Records</span><input class="srch" id="pSrch" placeholder="Search member..." oninput="renderPayments()"></div>
+        <table><thead><tr><th>Member</th><th>Phone</th><th>Plan</th><th>Amount</th><th>Date</th><th>Status</th><th></th></tr></thead>
+        <tbody id="pBody"></tbody></table>
+      </div>
+    </div>
+
+    <!-- NOTIFICATIONS -->
+    <div class="page" id="ap-notifs">
+      <div class="ptitle">Notifications</div><div class="psub">Membership expiry alerts and system messages.</div>
+      <div class="card" id="aNotifCard"></div>
+    </div>
+
+    <!-- LIVE -->
+    <div class="page" id="ap-live">
+      <div class="ptitle">🔴 Go Live</div>
+      <div class="psub">Start a live stream — members will see it on the website and in their portal.</div>
+      <div class="lw">
+        <div>
+          <div class="lscreen" id="lscr">
+            <div class="lpulse"></div>
+            <div class="lph" id="lph">
+              <span style="font-size:50px;">📹</span>
+              <h3>Gym Live Stream</h3>
+              <p>Tap Go Live to broadcast your camera. Members see it in real time.</p>
+              <button class="sb" onclick="adminGoLive()" style="padding:11px 26px;font-size:16px;margin-top:8px;">🔴 Go Live</button>
+            </div>
+            <video id="lVid" autoplay muted playsinline style="display:none;width:100%;height:100%;object-fit:cover;border-radius:14px;"></video>
+            <div class="lbadge" id="lbadge" style="display:none;"><div class="ldot"></div><span style="font-family:var(--fd);font-size:14px;font-weight:800;letter-spacing:2px;color:var(--p);">LIVE</span><span style="font-size:12px;color:var(--mu);margin-left:8px;" id="lViewers">👁 0</span></div>
+            <div class="ltimer" id="lTimer" style="display:none;">00:00</div>
+            <div class="lctrl" id="lctrl" style="display:none;">
+              <button class="lcb" onclick="flipCam()" title="Flip">🔄</button>
+              <button class="lcb" onclick="toggleMic()" id="micBtn">🎙️</button>
+              <button class="lcb stop" onclick="adminStopLive()">⏹ End</button>
+            </div>
+          </div>
+          <p style="font-size:13px;color:var(--mu);padding:12px 2px;" id="lInfo"></p>
+        </div>
+        <div class="cpanel">
+          <div class="chead">💬 Live Chat <span class="conl" id="aChatOnl">● 0 online</span></div>
+          <div class="cmsgs" id="aChatMsgs"><div class="cmsg"><span class="cav">🏋️</span><div><span class="cname">BrothersGym</span><span class="ctxt">Admin chat ready.</span></div></div></div>
+          <div class="cinp"><input id="aChatIn" placeholder="Message..." onkeydown="if(event.key==='Enter')sendAChat()"><button onclick="sendAChat()">➤</button></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════ MEMBER VIEW ══════════════ -->
+<div class="view" id="memberView">
+  <div class="sidebar" id="mSb">
+    <div class="slogo">My Account<small>Brothers Gym</small></div>
+    <div class="ni on" onclick="mPage('dashboard')"><span class="ico">🏠</span> Dashboard</div>
+    <div class="ni" onclick="mPage('membership')"><span class="ico">🎫</span> Membership</div>
+    <div class="ni" onclick="mPage('payments')"><span class="ico">💳</span> Payments</div>
+    <div class="ni" onclick="mPage('live')"><span class="ico">📺</span> Watch Live</div>
+    <div class="ni" onclick="mPage('notifs')"><span class="ico">🔔</span> Notifications <span class="nbadge" id="mNBadge" style="display:none;">0</span></div>
+    <div class="ni" onclick="mPage('settings')"><span class="ico">⚙️</span> Settings</div>
+    <div class="sfooter">
+      <div class="suser" id="mSUser"><strong>Member</strong>Loading...</div>
+      <button class="lout" onclick="doLogout()">Logout</button>
+    </div>
+  </div>
+  <div class="main">
+
+    <div class="page on" id="mp-dashboard">
+      <div class="ptitle">My Dashboard</div><div class="psub">Track your membership and activity.</div>
+      <div id="mProfileCard"></div>
+      <div id="mMemCard"></div>
+      <div class="card"><div class="ch"><span class="ct">Recent Payments</span></div><div id="mRecPay"></div></div>
+    </div>
+
+    <div class="page" id="mp-membership">
+      <div class="ptitle">My Membership</div><div class="psub">Plan details and renewal options.</div>
+      <div id="mMemFull"></div>
+    </div>
+
+    <div class="page" id="mp-payments">
+      <div class="ptitle">Payment History</div><div class="psub">All your fee transactions.</div>
+      <div class="card" id="mPayHist"></div>
+    </div>
+
+    <div class="page" id="mp-live">
+      <div class="ptitle">📺 Watch Live</div><div class="psub">Watch live sessions from the gym.</div>
+      <div class="card" style="margin-bottom:16px;">
+        <div style="padding:12px 18px;background:rgba(255,60,0,.08);border-bottom:1px solid var(--br);display:flex;align-items:center;gap:10px;font-family:var(--fd);font-weight:800;font-size:16px;text-transform:uppercase;letter-spacing:1px;">
+          <div class="ldot" id="mLiveDot" style="background:#555;animation:none;"></div> Gym Live Stream &nbsp;<span id="mLiveStat" style="font-size:13px;font-weight:400;opacity:.7;">Offline</span>
+        </div>
+        <div style="padding:0;">
+          <div id="mLiveOff" style="padding:36px;text-align:center;color:var(--mu);font-size:14px;">No live stream active. Come back when the gym is open 💪</div>
+          <div id="mLiveOn" style="display:none;"><video id="mLiveVid" autoplay playsinline style="width:100%;border-radius:0 0 14px 14px;"></video></div>
+        </div>
+      </div>
+      <div class="cpanel" style="max-height:300px;">
+        <div class="chead">💬 Live Chat <span class="conl" id="mChatOnl">● offline</span></div>
+        <div class="cmsgs" id="mChatMsgs"></div>
+        <div class="cinp"><input id="mChatIn" placeholder="Say something..." onkeydown="if(event.key==='Enter')sendMChat()"><button onclick="sendMChat()">➤</button></div>
+      </div>
+    </div>
+
+    <div class="page" id="mp-notifs">
+      <div class="ptitle">Notifications</div><div class="psub">Membership alerts and updates.</div>
+      <div class="card" id="mNotifCard"></div>
+    </div>
+
+    <div class="page" id="mp-settings">
+      <div class="ptitle">Settings</div><div class="psub">Update your password.</div>
+      <div class="card" style="max-width:440px;">
+        <div class="ch"><span class="ct">Change Password</span></div>
+        <div style="padding:22px;">
+          <div class="fg"><label>Current Password</label><input type="password" id="cpOld" placeholder="Current password"></div>
+          <div class="fg"><label>New Password</label><input type="password" id="cpNew" placeholder="Min 6 characters"></div>
+          <div class="fg"><label>Confirm New Password</label><input type="password" id="cpNew2" placeholder="Repeat" onkeydown="if(event.key==='Enter')doChangePw()"></div>
+          <div id="cpMsg" class="msg"></div>
+          <button class="btn" onclick="doChangePw()" style="margin-top:12px;">Update Password</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- MODALS -->
+<div class="mbg" id="adminMod">
+  <div class="modal" style="max-width:350px;">
+    <button class="xbtn" onclick="closeMod('adminMod')">✕</button>
+    <div class="mtitle">Admin Login</div>
+    <div class="fg"><label>Admin Password</label><input type="password" id="aPw" placeholder="Enter admin password" onkeydown="if(event.key==='Enter')doAdminLogin()"></div>
+    <div id="aMMsg" class="msg"></div>
+    <button class="btn" onclick="doAdminLogin()" style="margin-top:12px;">Login as Admin</button>
+    <p style="font-size:12px;color:var(--mu);text-align:center;margin-top:12px;">Default password: <strong style="color:var(--tx);"></strong></p>
+  </div>
+</div>
+
+<div class="mbg" id="editMod">
+  <div class="modal">
+    <button class="xbtn" onclick="closeMod('editMod')">✕</button>
+    <div class="mtitle">Edit Member</div>
+    <input type="hidden" id="em_id">
+    <div class="mrow">
+      <div class="fg"><label>Full Name</label><input id="em_name"></div>
+      <div class="fg"><label>Phone</label><input id="em_phone" type="tel"></div>
+    </div>
+    <div class="mrow">
+      <div class="fg"><label>Plan</label><select id="em_plan"><option value="monthly">Monthly ₹800</option><option value="quarterly">Quarterly ₹2100</option><option value="annual">Annual ₹7500</option></select></div>
+      <div class="fg"><label>Admission Date</label><input id="em_date" type="date"></div>
+    </div>
+    <div class="fg"><label>Payment Status</label><select id="em_pay"><option value="paid">Paid</option><option value="pending">Pending</option></select></div>
+    <div class="mfoot"><button class="btn btn-ol" onclick="closeMod('editMod')">Cancel</button><button class="btn" onclick="saveEdit()">Save Changes</button></div>
+  </div>
+</div>
+
+<div class="mbg" id="renewMod">
+  <div class="modal" style="max-width:420px;">
+    <button class="xbtn" onclick="closeMod('renewMod')">✕</button>
+    <div class="mtitle">Renew Membership</div>
+    <p style="color:var(--mu);font-size:14px;margin-bottom:18px;">Member: <strong id="renewName" style="color:var(--tx)"></strong></p>
+    <div class="fg"><label>New Plan</label><select id="rPlan"><option value="monthly">Monthly ₹800</option><option value="quarterly">Quarterly ₹2100</option><option value="annual">Annual ₹7500</option></select></div>
+    <div class="fg"><label>Payment Date</label><input id="rDate" type="date"></div>
+    <div class="fg"><label>Payment Status</label><select id="rStatus"><option value="paid">Paid — Confirmed</option><option value="pending">Pending</option></select></div>
+    <div class="mfoot"><button class="btn btn-ol" onclick="closeMod('renewMod')">Cancel</button><button class="btn sb gn" style="background:var(--gn)" onclick="confirmRenew()">✓ Confirm Renewal</button></div>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════
+//  CONFIG
+// ════════════════════════════════════════
+const API = ''; // Empty = same origin (http://localhost:3000)
+const PLAN_DAYS  = {monthly:30, quarterly:90, annual:365};
+const PLAN_PRICE = {monthly:800, quarterly:2100, annual:7500};
+const PLAN_LABEL = {monthly:'Monthly ₹800', quarterly:'Quarterly ₹2100', annual:'Annual ₹7500'};
+
+// ════════════════════════════════════════
+//  STATE
+// ════════════════════════════════════════
+let session = JSON.parse(sessionStorage.getItem('gym_sess') || 'null');
+let allMembers = [], allPayments = [], allNotifs = [];
+let otpVerified = { signup: false, forgot: false };
+let otpTimers = {};
+
+// ════════════════════════════════════════
+//  HELPERS
+// ════════════════════════════════════════
+async function api(method, path, body) {
+  const opts = { method, headers: { 'Content-Type': 'application/json' } };
+  if (body) opts.body = JSON.stringify(body);
+  const r = await fetch(API + path, opts);
+  return r.json();
+}
+function showMsg(id, txt, type) {
+  const el = document.getElementById(id);
+  el.textContent = txt; el.className = 'msg ' + type; el.style.display = 'block';
+  setTimeout(() => el.style.display = 'none', 5000);
+}
+function setBtn(id, loading, txt) {
+  const b = document.getElementById(id);
+  b.disabled = loading;
+  b.innerHTML = loading ? `<span class="loading"></span>${txt}` : txt;
+}
+function cleanPhone(inp) {
+  inp.value = inp.value.replace(/[^\d+\s-]/g, '');
+}
+function getPhone(id) {
+  return document.getElementById(id).value.replace(/\D/g, '').slice(-10);
+}
+function fmtDate(d) {
+  if (!d) return '—';
+  return new Date(d).toLocaleDateString('en-IN', {day:'2-digit', month:'short', year:'numeric'});
+}
+function getExpiry(m) {
+  const d = new Date(m.admissionDate);
+  d.setDate(d.getDate() + PLAN_DAYS[m.plan]);
+  return d;
+}
+function getDaysLeft(m) {
+  const exp = getExpiry(m);
+  const now = new Date(); now.setHours(0,0,0,0);
+  return Math.ceil((exp - now) / 86400000);
+}
+function getStatus(m) {
+  const d = getDaysLeft(m);
+  return d <= 0 ? 'expired' : d <= 7 ? 'expiring' : 'active';
+}
+function floatNotif(title, desc, type = 'info') {
+  const wrap = document.getElementById('fnWrap');
+  const div = document.createElement('div');
+  div.className = `fn ${type}`;
+  div.innerHTML = `<div class="fntitle">${title}</div><div class="fndesc">${desc}</div>`;
+  wrap.appendChild(div);
+  setTimeout(() => div.classList.add('show'), 50);
+  setTimeout(() => { div.classList.remove('show'); setTimeout(() => div.remove(), 500); }, 5000);
+}
+function showView(v) {
+  document.querySelectorAll('.view').forEach(x => x.classList.remove('active'));
+  document.getElementById(v + 'View').classList.add('active');
+}
+function closeMod(id) { document.getElementById(id).classList.remove('open'); }
+function openAdminModal() { document.getElementById('adminMod').classList.add('open'); }
+function toggleSb() {
+  document.querySelectorAll('.sidebar').forEach(s => s.classList.toggle('open'));
+  document.getElementById('ovlay').classList.toggle('show');
+}
+
+// ════════════════════════════════════════
+//  THREE.JS BACKGROUND
+// ════════════════════════════════════════
+(function(){
+  const scene=new THREE.Scene(), cam=new THREE.PerspectiveCamera(75,innerWidth/innerHeight,.1,1000);
+  const renderer=new THREE.WebGLRenderer({canvas:document.getElementById('bg3d'),alpha:true,antialias:true});
+  renderer.setSize(innerWidth,innerHeight); renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+  cam.position.z=6;
+  const geo=new THREE.BufferGeometry(), N=1000;
+  const pos=new Float32Array(N*3), col=new Float32Array(N*3);
+  for(let i=0;i<N*3;i+=3){pos[i]=(Math.random()-.5)*22;pos[i+1]=(Math.random()-.5)*22;pos[i+2]=(Math.random()-.5)*22;col[i]=1;col[i+1]=Math.random()*.25;col[i+2]=0;}
+  geo.setAttribute('position',new THREE.BufferAttribute(pos,3));
+  geo.setAttribute('color',new THREE.BufferAttribute(col,3));
+  const mat=new THREE.PointsMaterial({size:.04,vertexColors:true,transparent:true,opacity:.6});
+  const pts=new THREE.Points(geo,mat); scene.add(pts);
+  (function loop(){requestAnimationFrame(loop);pts.rotation.y+=.0006;pts.rotation.x+=.0002;renderer.render(scene,cam);})();
+  window.addEventListener('resize',()=>{cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
+})();
+
+// ════════════════════════════════════════
+//  OTP — calls real backend
+// ════════════════════════════════════════
+function startOTPTimer(prefix) {
+  let secs = 120;
+  const tid = `${prefix}OtpTimer`;
+  const btid = `${prefix}OtpBtn`;
+  clearInterval(otpTimers[prefix]);
+  otpTimers[prefix] = setInterval(() => {
+    secs--;
+    const el = document.getElementById(tid);
+    if (el) el.textContent = `(${secs}s)`;
+    if (secs <= 0) {
+      clearInterval(otpTimers[prefix]);
+      const btn = document.getElementById(btid);
+      if (btn) { btn.disabled = false; btn.textContent = 'Resend'; }
+      if (el) el.textContent = '(expired)';
+    }
+  }, 1000);
+}
+
+async function sendOTP(flow) {
+  const phoneId  = flow === 'signup' ? 'sPhone'   : 'fpPhone';
+  const btnId    = flow === 'signup' ? 'sOtpBtn'  : 'fpOtpBtn';
+  const hintId   = flow === 'signup' ? 'sOtpHint' : 'fpOtpHint';
+  const grpId    = flow === 'signup' ? 'sOtpGroup': 'fpOtpGroup';
+  const msgId    = flow === 'signup' ? 'sMsg'     : 'fpMsg';
+  const phone    = getPhone(phoneId);
+
+  if (phone.length !== 10) return showMsg(msgId, 'Enter a valid 10-digit phone number.', 'err');
+
+  const btn = document.getElementById(btnId);
+  btn.disabled = true; btn.classList.add('sending'); btn.textContent = 'Sending...';
+
+  try {
+    const data = await api('POST', '/api/otp/send', { phone });
+    if (!data.success) {
+      btn.disabled = false; btn.classList.remove('sending'); btn.textContent = 'Send OTP';
+      return showMsg(msgId, data.message, 'err');
+    }
+
+    document.getElementById(grpId).style.display = 'block';
+    btn.classList.remove('sending'); btn.textContent = 'Sent ✓';
+
+    // Show hint — only shows dev OTP when server is in dev mode
+    const hint = document.getElementById(hintId);
+    hint.style.display = 'block';
+    hint.textContent = data.devMode
+      ? `[DEV MODE] Your OTP: ${data.devOtp} — Add Fast2SMS API key for real SMS`
+      : '✅ OTP sent to your phone! Check SMS. Valid for 5 minutes.';
+    hint.className = `msg ${data.devMode ? 'info' : 'ok'}`;
+
+    startOTPTimer(flow === 'signup' ? 's' : 'fp');
+    otpVerified[flow] = false;
+  } catch (e) {
+    btn.disabled = false; btn.classList.remove('sending'); btn.textContent = 'Send OTP';
+    showMsg(msgId, 'Network error. Is the server running?', 'err');
+  }
+}
+
+async function onOTPInput(flow) {
+  const otpId = flow === 'signup' ? 'sOTP' : 'fpOTP';
+  const phoneId = flow === 'signup' ? 'sPhone' : 'fpPhone';
+  const hintId = flow === 'signup' ? 'sOtpHint' : 'fpOtpHint';
+  const otp = document.getElementById(otpId).value.trim();
+  const phone = getPhone(phoneId);
+  if (otp.length !== 6) return;
+
+  const hint = document.getElementById(hintId);
+  hint.style.display = 'block'; hint.className = 'msg info'; hint.textContent = 'Verifying...';
+
+  const data = await api('POST', '/api/otp/verify', { phone, otp });
+  if (data.success) {
+    hint.className = 'msg ok'; hint.textContent = '✅ OTP verified!';
+    otpVerified[flow] = true;
+    if (flow === 'signup') {
+      document.getElementById('sPwGroups').style.display = 'block';
+      document.getElementById('sBtn').style.display = 'block';
+    } else {
+      document.getElementById('fpPwGroup').style.display = 'block';
+      document.getElementById('fpBtn').style.display = 'block';
+    }
+  } else {
+    hint.className = 'msg err'; hint.textContent = data.message;
+    otpVerified[flow] = false;
+  }
+}
+
+// ════════════════════════════════════════
+//  AUTH FORMS
+// ════════════════════════════════════════
+function aTab(tab) {
+  document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+  ['fLogin','fSignup','fForgot'].forEach(f => document.getElementById(f).style.display = 'none');
+  if (tab === 'login')  { document.querySelectorAll('.auth-tab')[0].classList.add('active'); document.getElementById('fLogin').style.display = 'block'; }
+  if (tab === 'signup') { document.querySelectorAll('.auth-tab')[1].classList.add('active'); document.getElementById('fSignup').style.display = 'block'; }
+  if (tab === 'forgot') { document.getElementById('fForgot').style.display = 'block'; }
+}
+
+async function doLogin() {
+  const phone = getPhone('lPhone');
+  const pass  = document.getElementById('lPass').value;
+  if (!phone || !pass) return showMsg('lMsg', 'Enter phone and password.', 'err');
+  setBtn('lBtn', true, 'Logging in...');
+  const data = await api('POST', '/api/auth/login', { phone, password: pass });
+  setBtn('lBtn', false, 'Login');
+  if (!data.success) return showMsg('lMsg', data.message, 'err');
+  session = { type: 'member', ...data.member };
+  sessionStorage.setItem('gym_sess', JSON.stringify(session));
+  loadMemberView();
+}
+
+async function doSignup() {
+  if (!otpVerified.signup) return showMsg('sMsg', 'Please verify your OTP first.', 'err');
+  const name  = document.getElementById('sName').value.trim();
+  const phone = getPhone('sPhone');
+  const pass  = document.getElementById('sPw').value;
+  const pass2 = document.getElementById('sPw2').value;
+  if (!name || !phone) return showMsg('sMsg', 'All fields required.', 'err');
+  if (pass !== pass2) return showMsg('sMsg', 'Passwords do not match.', 'err');
+  setBtn('sBtn', true, 'Creating account...');
+  const data = await api('POST', '/api/auth/signup', { name, phone, password: pass });
+  setBtn('sBtn', false, 'Create Account');
+  if (!data.success) return showMsg('sMsg', data.message, 'err');
+  showMsg('sMsg', 'Account created! Logging you in...', 'ok');
+  setTimeout(() => { session = { type: 'member', ...data.member }; sessionStorage.setItem('gym_sess', JSON.stringify(session)); loadMemberView(); }, 1200);
+}
+
+async function doReset() {
+  if (!otpVerified.forgot) return showMsg('fpMsg', 'Please verify your OTP first.', 'err');
+  const phone = getPhone('fpPhone');
+  const pass  = document.getElementById('fpPw').value;
+  if (pass.length < 6) return showMsg('fpMsg', 'Password too short.', 'err');
+  setBtn('fpBtn', true, 'Resetting...');
+  const data = await api('POST', '/api/auth/reset-password', { phone, password: pass });
+  setBtn('fpBtn', false, 'Reset Password');
+  if (!data.success) return showMsg('fpMsg', data.message, 'err');
+  showMsg('fpMsg', 'Password reset! Please login.', 'ok');
+  setTimeout(() => aTab('login'), 1500);
+}
+
+async function doAdminLogin() {
+  const pw = document.getElementById('aPw').value;
+  setBtn('aPw', true, ''); // disable input
+  const data = await api('POST', '/api/auth/admin', { password: pw });
+  document.getElementById('aPw').disabled = false;
+  if (!data.success) return showMsg('aMMsg', data.message || 'Wrong password.', 'err');
+  closeMod('adminMod');
+  session = { type: 'admin' };
+  sessionStorage.setItem('gym_sess', JSON.stringify(session));
+  loadAdminView();
+}
+
+function doLogout() {
+  session = null;
+  sessionStorage.removeItem('gym_sess');
+  showView('auth');
+  aTab('login');
+}
+
+// ════════════════════════════════════════
+//  ADMIN VIEW
+// ════════════════════════════════════════
+async function loadAdminView() {
+  showView('admin');
+  document.getElementById('dashDate').textContent = 'Today: ' + new Date().toLocaleDateString('en-IN', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
+  document.getElementById('am_date').value = new Date().toISOString().split('T')[0];
+  await refreshData();
+  await api('POST', '/api/notifications/check-expiry');
+  allNotifs = await api('GET', '/api/notifications');
+  renderDashboard(); renderMembers(); renderPayments(); renderANotifs();
+}
+
+async function refreshData() {
+  [allMembers, allPayments] = await Promise.all([api('GET', '/api/members'), api('GET', '/api/payments')]);
+}
+
+function aPage(p) {
+  document.querySelectorAll('#adminView .page').forEach(x => x.classList.remove('on'));
+  document.querySelectorAll('#aSb .ni').forEach(x => x.classList.remove('on'));
+  document.getElementById('ap-' + p).classList.add('on');
+  const navMap = {dashboard:'📊',members:'👥',addmember:'➕',payments:'💳',notifs:'🔔',live:'🔴'};
+  document.querySelectorAll('#aSb .ni').forEach(x => { if (x.textContent.includes(navMap[p] || '?')) x.classList.add('on'); });
+  if (p === 'notifs') { api('GET', '/api/notifications').then(d => { allNotifs = d; renderANotifs(); }); }
+}
+
+function renderDashboard() {
+  const total = allMembers.length;
+  const active = allMembers.filter(m => getStatus(m) === 'active').length;
+  const expiring = allMembers.filter(m => getStatus(m) === 'expiring').length;
+  const expired = allMembers.filter(m => getStatus(m) === 'expired').length;
+  document.getElementById('dashStats').innerHTML = `
+    <div class="sc or"><div class="ico2">👥</div><div class="val">${total}</div><div class="lbl">Total Members</div></div>
+    <div class="sc gn"><div class="ico2">✅</div><div class="val">${active}</div><div class="lbl">Active</div></div>
+    <div class="sc yw"><div class="ico2">⚠️</div><div class="val">${expiring}</div><div class="lbl">Expiring Soon</div></div>
+    <div class="sc rd"><div class="ico2">❌</div><div class="val">${expired}</div><div class="lbl">Expired</div></div>`;
+  const badge = expiring + expired;
+  const b = document.getElementById('expBadge');
+  b.textContent = badge; b.style.display = badge ? 'inline' : 'none';
+  const expList = allMembers.filter(m => getDaysLeft(m) <= 7).sort((a,b) => getDaysLeft(a)-getDaysLeft(b));
+  document.getElementById('expBody').innerHTML = expList.length ? expList.map(m => `
+    <tr><td><strong>${m.name}</strong></td><td>${m.phone}</td><td>${PLAN_LABEL[m.plan]}</td>
+    <td><span class="badge ${getStatus(m)}">${getDaysLeft(m) <= 0 ? 'Expired' : getDaysLeft(m)+' days left'}</span></td>
+    <td><button class="sb" style="padding:5px 12px;font-size:12px;" onclick="openRenew('${m.id}')">Renew</button></td></tr>`).join('')
+    : '<tr><td colspan="5" class="empty">✅ No memberships expiring in 7 days</td></tr>';
+  document.getElementById('recPayBody').innerHTML = allPayments.slice(0,5).map(p => `
+    <tr><td><strong>${p.memberName}</strong></td><td>${PLAN_LABEL[p.plan]}</td>
+    <td style="color:var(--gn);font-family:var(--fd);font-size:18px;font-weight:900;">₹${p.amount}</td>
+    <td>${fmtDate(p.date)}</td><td><span class="badge ${p.status}">${p.status}</span></td></tr>`).join('');
+}
+
+function renderMembers() {
+  const q = (document.getElementById('mSrch') || {}).value || '';
+  let list = allMembers;
+  if (q) list = list.filter(m => m.name.toLowerCase().includes(q.toLowerCase()) || m.phone.includes(q));
+  document.getElementById('mBody').innerHTML = list.map(m => `
+    <tr>
+      <td><strong>${m.name}</strong></td><td>${m.phone}</td><td>${PLAN_LABEL[m.plan]}</td>
+      <td>${fmtDate(m.admissionDate)}</td><td>${fmtDate(getExpiry(m).toISOString().split('T')[0])}</td>
+      <td><span class="badge ${getStatus(m)}">${getStatus(m)}</span> <span class="badge ${m.paymentStatus}">${m.paymentStatus}</span></td>
+      <td><div class="abtn">
+        <button class="ib" onclick="openEdit('${m.id}')" title="Edit">✏️</button>
+        <button class="ib" onclick="openRenew('${m.id}')" title="Renew" style="color:var(--gn)">🔄</button>
+        <button class="ib del" onclick="delMember('${m.id}')" title="Delete">🗑️</button>
+      </div></td>
+    </tr>`).join('');
+}
+
+async function addMember() {
+  const name = document.getElementById('am_name').value.trim();
+  const phone = getPhone('am_phone');
+  const date = document.getElementById('am_date').value;
+  const plan = document.getElementById('am_plan').value;
+  const gender = document.getElementById('am_gender').value;
+  const emergency = document.getElementById('am_emg').value.trim();
+  const notes = document.getElementById('am_notes').value.trim();
+  const paymentStatus = document.getElementById('am_pay').value;
+  if (!name || !phone || !date) return showMsg('amMsg', 'Name, phone and date are required.', 'err');
+  const data = await api('POST', '/api/members', {name, phone, plan, admissionDate:date, gender, emergency, notes, paymentStatus});
+  if (!data.success) return showMsg('amMsg', data.message, 'err');
+  showMsg('amMsg', data.message, 'ok');
+  floatNotif('✅ Member Added', `${name} — ${PLAN_LABEL[plan]}`, 'ok');
+  ['am_name','am_phone','am_notes','am_emg'].forEach(id => document.getElementById(id).value = '');
+  await refreshData();
+  renderDashboard(); renderMembers();
+}
+
+function openEdit(id) {
+  const m = allMembers.find(x => x.id === id); if (!m) return;
+  document.getElementById('em_id').value = m.id;
+  document.getElementById('em_name').value = m.name;
+  document.getElementById('em_phone').value = m.phone;
+  document.getElementById('em_plan').value = m.plan;
+  document.getElementById('em_date').value = m.admissionDate;
+  document.getElementById('em_pay').value = m.paymentStatus;
+  document.getElementById('editMod').classList.add('open');
+}
+async function saveEdit() {
+  const id = document.getElementById('em_id').value;
+  const data = await api('PUT', `/api/members/${id}`, {
+    name: document.getElementById('em_name').value.trim(),
+    phone: document.getElementById('em_phone').value.trim().replace(/\D/g,'').slice(-10),
+    plan: document.getElementById('em_plan').value,
+    admissionDate: document.getElementById('em_date').value,
+    paymentStatus: document.getElementById('em_pay').value
+  });
+  closeMod('editMod');
+  await refreshData(); renderMembers(); renderDashboard();
+  floatNotif('✏️ Updated', data.member?.name + ' saved', 'info');
+}
+async function delMember(id) {
+  const m = allMembers.find(x => x.id === id);
+  if (!confirm(`Delete ${m?.name}?`)) return;
+  await api('DELETE', `/api/members/${id}`);
+  await refreshData(); renderMembers(); renderDashboard();
+  floatNotif('🗑️ Deleted', 'Member removed', 'warn');
+}
+
+let renewId = '';
+function openRenew(id) {
+  const m = allMembers.find(x => x.id === id); if (!m) return;
+  renewId = id;
+  document.getElementById('renewName').textContent = m.name;
+  document.getElementById('rDate').value = new Date().toISOString().split('T')[0];
+  document.getElementById('rPlan').value = m.plan;
+  document.getElementById('renewMod').classList.add('open');
+}
+async function confirmRenew() {
+  const data = await api('POST', `/api/members/${renewId}/renew`, {
+    plan: document.getElementById('rPlan').value,
+    date: document.getElementById('rDate').value,
+    paymentStatus: document.getElementById('rStatus').value
+  });
+  closeMod('renewMod');
+  await refreshData(); renderMembers(); renderDashboard();
+  floatNotif('🔄 Renewed', data.member?.name + ' — ' + PLAN_LABEL[data.member?.plan], 'ok');
+}
+
+function renderPayments() {
+  const q = (document.getElementById('pSrch') || {}).value || '';
+  let list = allPayments;
+  if (q) list = list.filter(p => p.memberName.toLowerCase().includes(q.toLowerCase()) || p.phone.includes(q));
+  document.getElementById('pBody').innerHTML = list.map(p => `
+    <tr><td><strong>${p.memberName}</strong></td><td>${p.phone}</td><td>${PLAN_LABEL[p.plan]}</td>
+    <td style="color:var(--gn);font-family:var(--fd);font-size:18px;font-weight:900;">₹${p.amount}</td>
+    <td>${fmtDate(p.date)}</td><td><span class="badge ${p.status}">${p.status}</span></td>
+    <td>${p.status === 'pending' ? `<button class="sb gn" style="padding:5px 12px;font-size:12px;" onclick="markPaid('${p.id}')">Mark Paid</button>` : '—'}</td>
+    </tr>`).join('');
+}
+async function markPaid(pid) {
+  await api('PUT', `/api/payments/${pid}/mark-paid`);
+  allPayments = await api('GET', '/api/payments');
+  await refreshData();
+  renderPayments(); renderDashboard();
+  floatNotif('💳 Payment Confirmed', '', 'ok');
+}
+
+function renderANotifs() {
+  const unread = allNotifs.filter(n => !n.read).length;
+  const b = document.getElementById('aNBadge');
+  b.textContent = unread; b.style.display = unread ? 'inline' : 'none';
+  const card = document.getElementById('aNotifCard');
+  if (!allNotifs.length) { card.innerHTML = '<div class="empty">No notifications yet ✅</div>'; return; }
+  card.innerHTML = `<div class="ch"><span class="ct">Notifications</span><button class="sb ol" onclick="clearNotifs()">Clear All</button></div>` +
+    allNotifs.map(n => `<div class="nit ${n.read ? '' : 'unread'}" onclick="markNRead('${n.id}')">
+      <div class="nico ${n.type}"><span>${n.icon}</span></div>
+      <div class="nbody"><div class="ntitle">${n.title}</div><div class="ndesc">${n.desc}</div><div class="ntime">${new Date(n.time).toLocaleString('en-IN')}</div></div>
+    </div>`).join('');
+}
+async function clearNotifs() { await api('DELETE', '/api/notifications'); allNotifs = []; renderANotifs(); }
+async function markNRead(id) { await api('PUT', `/api/notifications/${id}/read`); allNotifs.find(n=>n.id===id)&&(allNotifs.find(n=>n.id===id).read=true); renderANotifs(); }
+
+// ════════════════════════════════════════
+//  MEMBER VIEW
+// ════════════════════════════════════════
+async function loadMemberView() {
+  showView('member');
+  const m = session;
+  document.getElementById('mSUser').innerHTML = `<strong>${m.name}</strong>ID: ${m.id}`;
+  const fresh = await api('GET', '/api/members');
+  const me = fresh.find(x => x.id === m.id) || m;
+  Object.assign(session, me);
+  renderMemberDash(me);
+  // Expiry alerts
+  const d = getDaysLeft(me);
+  if (d <= 0) floatNotif('❌ Membership Expired!', 'Please contact gym to renew', 'danger');
+  else if (d <= 3) floatNotif(`🚨 Expires in ${d} day(s)!`, 'Please renew soon', 'danger');
+  else if (d <= 7) floatNotif(`⚠️ ${d} days left`, 'Your membership is expiring soon', 'warn');
+  // Notifications for member
+  const notifs = await api('GET', '/api/notifications');
+  const myNotifs = notifs.filter(n => !n.memberId || n.memberId === me.id);
+  const unread = myNotifs.filter(n => !n.read).length;
+  const nb = document.getElementById('mNBadge');
+  nb.textContent = unread; nb.style.display = unread ? 'inline' : 'none';
+  document.getElementById('mNotifCard').innerHTML = myNotifs.length
+    ? myNotifs.map(n => `<div class="nit ${n.read ? '' : 'unread'}">
+        <div class="nico ${n.type}"><span>${n.icon}</span></div>
+        <div class="nbody"><div class="ntitle">${n.title}</div><div class="ndesc">${n.desc}</div><div class="ntime">${new Date(n.time).toLocaleString('en-IN')}</div></div>
+      </div>`).join('')
+    : '<div class="empty">No notifications yet ✅</div>';
+  checkLiveStatus();
+  setInterval(checkLiveStatus, 10000); // Poll every 10s
+}
+
+function mPage(p) {
+  document.querySelectorAll('#memberView .page').forEach(x => x.classList.remove('on'));
+  document.querySelectorAll('#mSb .ni').forEach(x => x.classList.remove('on'));
+  document.getElementById('mp-' + p).classList.add('on');
+  if (p === 'membership') renderMembershipFull();
+  if (p === 'payments') loadMemberPayments();
+}
+
+function renderMemberDash(m) {
+  const d = getDaysLeft(m);
+  const exp = getExpiry(m);
+  const initials = m.name.split(' ').map(w=>w[0]).join('').substr(0,2).toUpperCase();
+  document.getElementById('mProfileCard').innerHTML = `
+    <div class="mprofile">
+      <div class="mavatar">${initials}</div>
+      <div>
+        <div class="mid">ID: ${m.id}</div>
+        <div class="mname">${m.name}</div>
+        <div style="margin-top:6px;display:flex;gap:8px;flex-wrap:wrap;">
+          <span class="mpill">${PLAN_LABEL[m.plan]}</span>
+          <span class="badge ${getStatus(m)}">${getStatus(m)}</span>
+          <span class="badge ${m.paymentStatus}">${m.paymentStatus}</span>
+        </div>
+      </div>
+    </div>`;
+  const pct = Math.max(0, Math.min(100, (d / PLAN_DAYS[m.plan]) * 100));
+  const cls = d <= 3 ? 'danger' : d <= 7 ? 'warn' : '';
+  document.getElementById('mMemCard').innerHTML = `
+    <div class="memprog">
+      <div class="dleft ${cls}">${d <= 0 ? 'EXPIRED' : d}</div>
+      <div style="font-size:13px;color:var(--mu);margin:4px 0 14px;">${d <= 0 ? 'Membership expired' : 'days remaining — expires ' + fmtDate(exp.toISOString().split('T')[0])}</div>
+      <div style="display:flex;justify-content:space-between;font-size:13px;color:var(--mu);margin-bottom:8px;"><span>Progress</span><span>${Math.round(100 - pct)}% used</span></div>
+      <div class="pbar"><div class="pfill ${cls}" style="width:${pct}%"></div></div>
+      ${d <= 7 ? `<div style="margin-top:14px;padding:13px;background:rgba(255,60,0,.08);border:1px solid rgba(255,60,0,.2);border-radius:10px;font-size:14px;color:var(--p);">
+        ${d <= 0 ? '❌ Expired.' : '⚠️ Expiring in ' + d + ' day(s)!'}
+        <a href="https://wa.me/919548611898?text=Hi, please renew my membership. ID: ${m.id}" target="_blank" style="color:var(--p);font-weight:700;margin-left:10px;">💬 WhatsApp to Renew</a>
+      </div>` : ''}
+    </div>`;
+  // Recent payments
+  api('GET', `/api/payments/member/${m.id}`).then(pays => {
+    document.getElementById('mRecPay').innerHTML = pays.slice(0,3).map(p => `
+      <div class="payrow"><div style="display:flex;align-items:center;gap:12px;"><div class="payico">💳</div><div><div style="font-size:14px;font-weight:600;">${PLAN_LABEL[p.plan]}</div><div style="font-size:12px;color:var(--mu);">${fmtDate(p.date)}</div></div></div>
+      <div><div class="payamt">₹${p.amount}</div><span class="badge ${p.status}">${p.status}</span></div></div>`).join('')
+      || '<div class="empty">No payments recorded yet.</div>';
+  });
+}
+
+function renderMembershipFull() {
+  const m = session;
+  const d = getDaysLeft(m);
+  const exp = getExpiry(m);
+  document.getElementById('mMemFull').innerHTML = `
+    <div class="card">
+      <div class="ch"><span class="ct">${d <= 0 ? '❌ Expired' : '🎫 ' + PLAN_LABEL[m.plan]}</span></div>
+      <div style="padding:24px;">
+        <p style="color:var(--mu);font-size:15px;margin-bottom:20px;">${d <= 0 ? 'Membership has expired.' : 'Valid until: <strong style="color:var(--tx)">' + fmtDate(exp.toISOString().split('T')[0]) + '</strong> (' + d + ' days left)'}</p>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;">
+          <a href="tel:+919548611898" style="display:inline-block;padding:12px 22px;border-radius:8px;text-decoration:none;font-family:var(--fd);font-size:18px;font-weight:800;text-transform:uppercase;letter-spacing:1px;background:var(--p);color:white;">📞 Call to Renew</a>
+          <a href="https://wa.me/919548611898?text=Hi, please renew my membership. ID: ${m.id}, Name: ${m.name}" target="_blank" style="display:inline-block;padding:12px 22px;border-radius:8px;text-decoration:none;font-family:var(--fd);font-size:18px;font-weight:800;text-transform:uppercase;letter-spacing:1px;background:#25d366;color:white;">💬 WhatsApp</a>
+        </div>
+      </div>
+    </div>`;
+}
+
+async function loadMemberPayments() {
+  const pays = await api('GET', `/api/payments/member/${session.id}`);
+  document.getElementById('mPayHist').innerHTML = `<div class="ch"><span class="ct">Payment History</span></div>` +
+    (pays.length ? pays.map(p => `
+      <div class="payrow"><div style="display:flex;align-items:center;gap:12px;"><div class="payico">💳</div><div><div style="font-size:14px;font-weight:600;">${PLAN_LABEL[p.plan]}</div><div style="font-size:12px;color:var(--mu);">${fmtDate(p.date)}</div></div></div>
+      <div style="text-align:right;"><div class="payamt">₹${p.amount}</div><span class="badge ${p.status}">${p.status}</span></div></div>`).join('')
+    : '<div class="empty">No payment records found.</div>');
+}
+
+async function doChangePw() {
+  const old = document.getElementById('cpOld').value;
+  const nw  = document.getElementById('cpNew').value;
+  const nw2 = document.getElementById('cpNew2').value;
+  if (nw !== nw2) return showMsg('cpMsg', 'Passwords do not match.', 'err');
+  const data = await api('POST', '/api/auth/change-password', { phone: session.phone, oldPassword: old, newPassword: nw });
+  showMsg('cpMsg', data.message, data.success ? 'ok' : 'err');
+  if (data.success) { document.getElementById('cpOld').value = ''; document.getElementById('cpNew').value = ''; document.getElementById('cpNew2').value = ''; }
+}
+
+// ════════════════════════════════════════
+//  LIVE STREAM (Admin)
+// ════════════════════════════════════════
+let aStream = null, aFacing = 'environment', aMuted = false, aTimer = null, aSecs = 0, aAutoMsg = null;
+const lBC = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('gym_live') : null;
+
+async function adminGoLive() {
+  try {
+    aStream = await navigator.mediaDevices.getUserMedia({video:{facingMode:aFacing}, audio:true});
+    document.getElementById('lVid').srcObject = aStream;
+    document.getElementById('lVid').style.display = 'block';
+    document.getElementById('lph').style.display = 'none';
+    document.getElementById('lbadge').style.display = 'flex';
+    document.getElementById('lctrl').style.display = 'flex';
+    document.getElementById('lTimer').style.display = 'block';
+    document.getElementById('lInfo').textContent = '🔴 You are LIVE — members can see your stream.';
+    aSecs = 0;
+    aTimer = setInterval(() => { aSecs++; document.getElementById('lTimer').textContent = String(Math.floor(aSecs/60)).padStart(2,'0')+':'+String(aSecs%60).padStart(2,'0'); }, 1000);
+    let viewers = 1;
+    aAutoMsg = setInterval(() => {
+      const msgs=[['🔥 Rahul','Looking strong bhai!'],['💪 Priya','Great session!'],['⚡ Vikram','Best gym in Mathura 🙌']];
+      const pick = msgs[Math.floor(Math.random()*msgs.length)];
+      addChatMsg('aChatMsgs', pick[0], pick[1]);
+      viewers = Math.min(viewers + Math.floor(Math.random()*2)+1, 50);
+      document.getElementById('lViewers').textContent = `👁 ${viewers}`;
+      document.getElementById('aChatOnl').textContent = `● ${viewers} online`;
+    }, 5000);
+    addChatMsg('aChatMsgs', 'BrothersGym 🏋️', 'Stream started! Welcome everyone 🔥');
+    if (lBC) lBC.postMessage({type:'live_start'});
+    await api('POST', '/api/live/start');
+    floatNotif('🔴 You are LIVE!', 'Members can watch your stream', 'ok');
+  } catch (e) {
+    floatNotif('❌ Camera Error', 'Allow camera permission to go live', 'danger');
+  }
+}
+async function flipCam() { aFacing = aFacing==='user'?'environment':'user'; if(aStream){aStream.getTracks().forEach(t=>t.stop()); adminGoLive();} }
+function toggleMic() { aMuted=!aMuted; if(aStream) aStream.getAudioTracks().forEach(t=>t.enabled=!aMuted); document.getElementById('micBtn').textContent=aMuted?'🔇':'🎙️'; }
+async function adminStopLive() {
+  if(aStream) aStream.getTracks().forEach(t=>t.stop());
+  clearInterval(aTimer); clearInterval(aAutoMsg);
+  const v=document.getElementById('lVid'); v.srcObject=null; v.style.display='none';
+  document.getElementById('lph').style.display='flex';
+  document.getElementById('lbadge').style.display='none';
+  document.getElementById('lctrl').style.display='none';
+  document.getElementById('lTimer').style.display='none';
+  document.getElementById('lInfo').textContent='Stream ended.';
+  addChatMsg('aChatMsgs', 'BrothersGym 🏋️', 'Stream ended. Thanks for watching! 💪');
+  if(lBC) lBC.postMessage({type:'live_stop'});
+  await api('POST', '/api/live/stop');
+  floatNotif('⏹ Stream Ended', '', 'info');
+}
+
+// ── Member live viewer ──
+async function checkLiveStatus() {
+  try {
+    const data = await api('GET', '/api/live/status');
+    const dot = document.getElementById('mLiveDot');
+    const stat = document.getElementById('mLiveStat');
+    if (!dot) return;
+    if (data.live) {
+      dot.style.background = 'var(--p)'; dot.style.animation = 'blk 1s ease infinite';
+      stat.textContent = 'LIVE NOW 🔴';
+      document.getElementById('mChatOnl').textContent = '● LIVE';
+    } else {
+      dot.style.background = '#555'; dot.style.animation = 'none';
+      stat.textContent = 'Offline';
+    }
+  } catch(e) {}
+}
+if (lBC) {
+  lBC.onmessage = e => {
+    if (e.data.type === 'live_start') {
+      floatNotif('🔴 Admin is LIVE!', 'Go to Watch Live to see the stream', 'info');
+      checkLiveStatus();
+    }
+    if (e.data.type === 'live_stop') checkLiveStatus();
+  };
+}
+
+// ── Shared chat ──
+const chatAV = ['🏋️','💪','🔥','⚡','👊','🎯','🚀','🙌'];
+function addChatMsg(containerId, name, txt) {
+  const msgs = document.getElementById(containerId); if (!msgs) return;
+  const div = document.createElement('div'); div.className = 'cmsg';
+  div.innerHTML = `<span class="cav">${chatAV[Math.floor(Math.random()*chatAV.length)]}</span><div><span class="cname">${name}</span><span class="ctxt">${txt}</span></div>`;
+  msgs.appendChild(div); msgs.scrollTop = msgs.scrollHeight;
+  while (msgs.children.length > 60) msgs.removeChild(msgs.firstChild);
+}
+function sendAChat() { const i=document.getElementById('aChatIn'); const v=i.value.trim(); if(!v)return; addChatMsg('aChatMsgs','Admin 👑',v); i.value=''; }
+function sendMChat() { const i=document.getElementById('mChatIn'); const v=i.value.trim(); if(!v)return; addChatMsg('mChatMsgs',session?.name||'Guest',v); i.value=''; }
+
+// ════════════════════════════════════════
+//  INIT
+// ════════════════════════════════════════
+(function init() {
+  if (!session) { showView('auth'); return; }
+  if (session.type === 'admin') loadAdminView();
+  else loadMemberView();
+})();
+</script>
+</body>
+</html>
