@@ -180,6 +180,11 @@ tr:hover td{background:rgba(255,255,255,.02);}
 .fn-wrap{position:fixed;top:18px;right:18px;z-index:9000;display:flex;flex-direction:column;gap:9px;pointer-events:none;}
 .fn{background:#0f1219;border-left:4px solid var(--p);border-radius:10px;padding:13px 17px;min-width:280px;max-width:340px;box-shadow:0 10px 40px rgba(0,0,0,.5);transform:translateX(400px);transition:transform .4s ease;pointer-events:all;}
 .fn.show{transform:translateX(0);}
+@media(max-width:900px){
+  .fn-wrap{top:auto;bottom:18px;right:10px;left:10px;align-items:stretch;}
+  .fn{min-width:unset;max-width:unset;transform:translateY(120px);}
+  .fn.show{transform:translateY(0);}
+}
 .fn.warn{border-color:var(--yw);}.fn.danger{border-color:var(--rd);}.fn.ok{border-color:var(--gn);}
 .fntitle{font-size:14px;font-weight:700;margin-bottom:2px;}
 .fndesc{font-size:13px;color:var(--mu);}
@@ -195,17 +200,54 @@ tr:hover td{background:rgba(255,255,255,.02);}
 
 /* RESPONSIVE */
 @media(max-width:900px){
+  /* Sidebar slides in from left */
   .sidebar{transform:translateX(-100%);}
-  .sidebar.open{transform:translateX(0);}
-  .main{margin-left:0;padding:16px;}
+  .sidebar.open{transform:translateX(0);z-index:400;}
+  /* Main content — padding-top to clear hamburger button */
+  .main{margin-left:0;padding:64px 14px 20px;}
+  /* Stats grid 2-col on tablet, 1-col on small phone */
   .srow{grid-template-columns:1fr 1fr;}
   .lw{grid-template-columns:1fr;}
   .mrow{grid-template-columns:1fr;}
+  /* Tables scroll horizontally on mobile */
+  .card{overflow-x:auto;}
+  table{min-width:520px;}
+  /* Action buttons — bigger tap targets on mobile */
+  .abtn{gap:8px;flex-wrap:wrap;}
+  .ib{padding:8px 12px;font-size:14px;min-height:38px;min-width:38px;}
+  /* Sidebar nav items — bigger tap area */
+  .ni{padding:14px 20px;font-size:15px;}
+  /* Stats cards font smaller */
+  .sc .val{font-size:28px;}
+  /* Profile card wraps on small screen */
+  .mprofile{flex-direction:column;align-items:flex-start;gap:14px;}
+  /* Days left number smaller */
+  .dleft{font-size:32px;}
+  /* Notif items */
+  .nit{padding:12px 14px;}
+  /* Reduce page title size */
+  .ptitle{font-size:28px;}
+  /* Add member form */
+  .mrow .fg{margin-bottom:12px;}
 }
-.hbg{display:none;position:fixed;top:14px;left:14px;z-index:300;background:var(--sf);border:1px solid var(--br);border-radius:8px;padding:7px 10px;cursor:pointer;flex-direction:column;gap:5px;}
-.hbg span{display:block;width:22px;height:2px;background:var(--tx);border-radius:2px;}
+@media(max-width:480px){
+  .srow{grid-template-columns:1fr;}
+  .main{padding:60px 10px 16px;}
+  .sc{padding:14px 16px;}
+  .sc .val{font-size:26px;}
+  .ptitle{font-size:24px;}
+  table{min-width:460px;}
+  /* Stack payment rows vertically */
+  .payrow{flex-direction:column;align-items:flex-start;gap:8px;}
+  /* Hide less important table columns on tiny screens */
+  th:nth-child(4),td:nth-child(4){display:none;}
+}
+/* Hamburger button */
+.hbg{display:none;position:fixed;top:12px;left:12px;z-index:500;background:rgba(9,11,15,.95);border:1px solid var(--br);border-radius:10px;padding:9px 12px;cursor:pointer;flex-direction:column;gap:5px;box-shadow:0 4px 20px rgba(0,0,0,.5);}
+.hbg span{display:block;width:22px;height:2px;background:var(--tx);border-radius:2px;transition:.3s;}
 @media(max-width:900px){.hbg{display:flex;}}
-.ovlay{display:none;position:fixed;inset:0;z-index:99;background:rgba(0,0,0,.5);}
+/* Overlay behind open sidebar */
+.ovlay{display:none;position:fixed;inset:0;z-index:390;background:rgba(0,0,0,.6);}
 .ovlay.show{display:block;}
 </style>
 </head>
@@ -390,32 +432,54 @@ tr:hover td{background:rgba(255,255,255,.02);}
     <!-- LIVE -->
     <div class="page" id="ap-live">
       <div class="ptitle">🔴 Go Live</div>
-      <div class="psub">Start a live stream — members will see it on the website and in their portal.</div>
+      <div class="psub">Paste your YouTube Live or Facebook Live link. Members will see it instantly in their portal.</div>
       <div class="lw">
         <div>
-          <div class="lscreen" id="lscr">
-            <div class="lpulse"></div>
-            <div class="lph" id="lph">
-              <span style="font-size:50px;">📹</span>
-              <h3>Gym Live Stream</h3>
-              <p>Tap Go Live to broadcast your camera. Members see it in real time.</p>
-              <button class="sb" onclick="adminGoLive()" style="padding:11px 26px;font-size:16px;margin-top:8px;">🔴 Go Live</button>
+          <!-- Live OFF state -->
+          <div id="aLiveOff" class="card" style="padding:32px;text-align:center;">
+            <div style="font-size:56px;margin-bottom:16px;">📺</div>
+            <div style="font-family:var(--fd);font-size:22px;font-weight:900;text-transform:uppercase;margin-bottom:8px;">Start a Live Session</div>
+            <p style="color:var(--mu);font-size:14px;margin-bottom:24px;">Go live on YouTube or Facebook first, then paste the link here. Members will see it in real time.</p>
+            <div class="fg" style="margin-bottom:12px;text-align:left;">
+              <label class="fl">YouTube / Facebook Live URL</label>
+              <input class="fi" id="aLiveUrl" placeholder="https://youtube.com/live/... or https://fb.me/live/..." style="font-size:14px;">
             </div>
-            <video id="lVid" autoplay muted playsinline style="display:none;width:100%;height:100%;object-fit:cover;border-radius:14px;"></video>
-            <div class="lbadge" id="lbadge" style="display:none;"><div class="ldot"></div><span style="font-family:var(--fd);font-size:14px;font-weight:800;letter-spacing:2px;color:var(--p);">LIVE</span><span style="font-size:12px;color:var(--mu);margin-left:8px;" id="lViewers">👁 0</span></div>
-            <div class="ltimer" id="lTimer" style="display:none;">00:00</div>
-            <div class="lctrl" id="lctrl" style="display:none;">
-              <button class="lcb" onclick="flipCam()" title="Flip">🔄</button>
-              <button class="lcb" onclick="toggleMic()" id="micBtn">🎙️</button>
-              <button class="lcb stop" onclick="adminStopLive()">⏹ End</button>
+            <div class="fg" style="margin-bottom:20px;text-align:left;">
+              <label class="fl">Session Title (optional)</label>
+              <input class="fi" id="aLiveTitle" placeholder="e.g. Morning Workout, Chest Day..." style="font-size:14px;">
+            </div>
+            <button class="sb" onclick="adminGoLive()" style="padding:12px 32px;font-size:16px;">🔴 Go Live Now</button>
+            <div style="margin-top:16px;padding:12px 16px;background:rgba(255,60,0,.06);border-radius:8px;font-size:12px;color:var(--mu);text-align:left;">
+              <strong style="color:var(--tx);">How to go live on YouTube:</strong><br>
+              1. Open YouTube app → "+" → Go Live<br>
+              2. Copy the stream link<br>
+              3. Paste above and tap Go Live Now
             </div>
           </div>
-          <p style="font-size:13px;color:var(--mu);padding:12px 2px;" id="lInfo"></p>
+          <!-- Live ON state -->
+          <div id="aLiveOn" style="display:none;">
+            <div class="card" style="padding:0;overflow:hidden;">
+              <div style="background:rgba(255,60,0,.12);padding:14px 18px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--br);">
+                <div class="ldot" style="background:var(--p);"></div>
+                <span style="font-family:var(--fd);font-size:16px;font-weight:900;text-transform:uppercase;letter-spacing:1px;color:var(--p);">LIVE NOW</span>
+                <span id="aLiveTitle2" style="font-size:13px;color:var(--mu);margin-left:4px;"></span>
+                <span id="aLiveTimer" style="font-size:13px;color:var(--mu);margin-left:auto;">00:00</span>
+              </div>
+              <div id="aLiveEmbed" style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;">
+                <iframe id="aLiveFrame" style="position:absolute;top:0;left:0;width:100%;height:100%;border:none;" allowfullscreen allow="autoplay"></iframe>
+              </div>
+              <div style="padding:14px 18px;display:flex;gap:10px;align-items:center;">
+                <span style="font-size:13px;color:var(--mu);flex:1;" id="aLiveUrlShow"></span>
+                <button class="ib" style="background:rgba(255,60,0,.15);color:var(--p);" onclick="adminStopLive()">⏹ End Stream</button>
+              </div>
+            </div>
+          </div>
         </div>
         <div class="cpanel">
-          <div class="chead">💬 Live Chat <span class="conl" id="aChatOnl">● 0 online</span></div>
-          <div class="cmsgs" id="aChatMsgs"><div class="cmsg"><span class="cav">🏋️</span><div><span class="cname">BrothersGym</span><span class="ctxt">Admin chat ready.</span></div></div></div>
-          <div class="cinp"><input id="aChatIn" placeholder="Message..." onkeydown="if(event.key==='Enter')sendAChat()"><button onclick="sendAChat()">➤</button></div>
+          <div class="chead">📢 Announce to Members</div>
+          <div style="padding:14px 16px;font-size:13px;color:var(--mu);">When you go live, members get a notification. You can also send a message below.</div>
+          <div class="cmsgs" id="aChatMsgs"><div class="cmsg"><span class="cav">🏋️</span><div><span class="cname">BrothersGym</span><span class="ctxt">Ready to go live.</span></div></div></div>
+          <div class="cinp"><input id="aChatIn" placeholder="Send announcement..." onkeydown="if(event.key==='Enter')sendAChat()"><button onclick="sendAChat()">➤</button></div>
         </div>
       </div>
     </div>
@@ -458,20 +522,33 @@ tr:hover td{background:rgba(255,255,255,.02);}
     </div>
 
     <div class="page" id="mp-live">
-      <div class="ptitle">📺 Watch Live</div><div class="psub">Watch live sessions from the gym.</div>
-      <div class="card" style="margin-bottom:16px;">
+      <div class="ptitle">📺 Watch Live</div><div class="psub">Watch live gym sessions.</div>
+      <div class="card" style="margin-bottom:16px;overflow:hidden;">
+        <!-- Header bar -->
         <div style="padding:12px 18px;background:rgba(255,60,0,.08);border-bottom:1px solid var(--br);display:flex;align-items:center;gap:10px;font-family:var(--fd);font-weight:800;font-size:16px;text-transform:uppercase;letter-spacing:1px;">
-          <div class="ldot" id="mLiveDot" style="background:#555;animation:none;"></div> Gym Live Stream &nbsp;<span id="mLiveStat" style="font-size:13px;font-weight:400;opacity:.7;">Offline</span>
+          <div class="ldot" id="mLiveDot" style="background:#555;animation:none;"></div>
+          Gym Live &nbsp;<span id="mLiveStat" style="font-size:13px;font-weight:400;opacity:.7;text-transform:none;">Offline</span>
+          <span id="mLiveTitle" style="font-size:12px;color:var(--mu);font-weight:400;text-transform:none;margin-left:4px;"></span>
         </div>
-        <div style="padding:0;">
-          <div id="mLiveOff" style="padding:36px;text-align:center;color:var(--mu);font-size:14px;">No live stream active. Come back when the gym is open 💪</div>
-          <div id="mLiveOn" style="display:none;"><video id="mLiveVid" autoplay playsinline style="width:100%;border-radius:0 0 14px 14px;"></video></div>
+        <!-- Offline -->
+        <div id="mLiveOff" style="padding:48px 24px;text-align:center;">
+          <div style="font-size:52px;margin-bottom:14px;">💪</div>
+          <div style="font-family:var(--fd);font-size:20px;font-weight:900;text-transform:uppercase;margin-bottom:8px;">No Live Stream Active</div>
+          <p style="color:var(--mu);font-size:14px;">The gym is not streaming right now.<br>Come back during session hours!</p>
+          <div style="margin-top:20px;padding:12px 16px;background:rgba(255,255,255,.04);border-radius:10px;font-size:13px;color:var(--mu);">
+            🕐 Morning: 5 AM – 10 AM &nbsp;|&nbsp; 🌆 Evening: 4 PM – 10 PM
+          </div>
         </div>
-      </div>
-      <div class="cpanel" style="max-height:300px;">
-        <div class="chead">💬 Live Chat <span class="conl" id="mChatOnl">● offline</span></div>
-        <div class="cmsgs" id="mChatMsgs"></div>
-        <div class="cinp"><input id="mChatIn" placeholder="Say something..." onkeydown="if(event.key==='Enter')sendMChat()"><button onclick="sendMChat()">➤</button></div>
+        <!-- Live embed -->
+        <div id="mLiveOn" style="display:none;">
+          <div id="mLiveEmbed" style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;">
+            <iframe id="mLiveFrame" style="position:absolute;top:0;left:0;width:100%;height:100%;border:none;" allowfullscreen allow="autoplay; encrypted-media"></iframe>
+          </div>
+          <div style="padding:12px 16px;display:flex;gap:12px;align-items:center;">
+            <span id="mLiveUrlLink" style="font-size:12px;color:var(--mu);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
+            <a id="mLiveOpenBtn" href="#" target="_blank" style="font-size:13px;color:var(--p);text-decoration:none;font-weight:600;white-space:nowrap;">▶ Open in YouTube</a>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -655,6 +732,13 @@ function openAdminModal() { document.getElementById('adminMod').classList.add('o
 function toggleSb() {
   document.querySelectorAll('.sidebar').forEach(s => s.classList.toggle('open'));
   document.getElementById('ovlay').classList.toggle('show');
+}
+// Close sidebar when any nav item is tapped on mobile
+function closeSbOnMobile() {
+  if (window.innerWidth <= 900) {
+    document.querySelectorAll('.sidebar').forEach(s => s.classList.remove('open'));
+    document.getElementById('ovlay').classList.remove('show');
+  }
 }
 
 // ════════════════════════════════════════
@@ -871,7 +955,9 @@ async function refreshData() {
 }
 
 function aPage(p) {
+  closeSbOnMobile();
   document.querySelectorAll('#adminView .page').forEach(x => x.classList.remove('on'));
+  if (p === 'live') loadAdminLiveState();
   document.querySelectorAll('#aSb .ni').forEach(x => x.classList.remove('on'));
   document.getElementById('ap-' + p).classList.add('on');
   const activeNav = document.querySelector('#aSb .ni[data-page="' + p + '"]');
@@ -1091,6 +1177,7 @@ async function loadMemberView() {
 }
 
 function mPage(p) {
+  closeSbOnMobile();
   document.querySelectorAll('#memberView .page').forEach(x => x.classList.remove('on'));
   document.querySelectorAll('#mSb .ni').forEach(x => x.classList.remove('on'));
   document.getElementById('mp-' + p).classList.add('on');
@@ -1192,88 +1279,118 @@ async function doChangePw() {
 //  LIVE STREAM (Admin)
 // ════════════════════════════════════════
 let aStream = null, aFacing = 'environment', aMuted = false, aTimer = null, aSecs = 0, aAutoMsg = null;
-const lBC = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('gym_live') : null;
+// ── Admin: Go Live via YouTube/Facebook URL ──
+let aLiveTimer = null;
+let aLiveSecs = 0;
+
+function getLiveEmbedUrl(url) {
+  if (!url) return '';
+  // YouTube live: convert to embed
+  // https://youtube.com/live/VIDEOID → https://www.youtube.com/embed/VIDEOID?autoplay=1
+  // https://youtu.be/VIDEOID
+  // https://www.youtube.com/watch?v=VIDEOID
+  let ytMatch = url.match(/(?:youtube\.com\/live\/|youtu\.be\/|youtube\.com\/watch\?v=)([a-zA-Z0-9_-]{11})/);
+  if (ytMatch) return 'https://www.youtube.com/embed/' + ytMatch[1] + '?autoplay=1&rel=0';
+  // Facebook live — embed directly
+  if (url.includes('facebook.com') || url.includes('fb.me') || url.includes('fb.watch')) {
+    return 'https://www.facebook.com/plugins/video.php?href=' + encodeURIComponent(url) + '&autoplay=1&show_text=0';
+  }
+  // Instagram / other — just return raw (may not embed, user opens in new tab)
+  return url;
+}
 
 async function adminGoLive() {
-  try {
-    aStream = await navigator.mediaDevices.getUserMedia({video:{facingMode:aFacing}, audio:true});
-    document.getElementById('lVid').srcObject = aStream;
-    document.getElementById('lVid').style.display = 'block';
-    document.getElementById('lph').style.display = 'none';
-    document.getElementById('lbadge').style.display = 'flex';
-    document.getElementById('lctrl').style.display = 'flex';
-    document.getElementById('lTimer').style.display = 'block';
-    document.getElementById('lInfo').textContent = '🔴 You are LIVE — members can see your stream.';
-    aSecs = 0;
-    aTimer = setInterval(() => { aSecs++; document.getElementById('lTimer').textContent = String(Math.floor(aSecs/60)).padStart(2,'0')+':'+String(aSecs%60).padStart(2,'0'); }, 1000);
-    let viewers = 1;
-    aAutoMsg = setInterval(() => {
-      const msgs=[['🔥 Rahul','Looking strong bhai!'],['💪 Priya','Great session!'],['⚡ Vikram','Best gym in Mathura 🙌']];
-      const pick = msgs[Math.floor(Math.random()*msgs.length)];
-      addChatMsg('aChatMsgs', pick[0], pick[1]);
-      viewers = Math.min(viewers + Math.floor(Math.random()*2)+1, 50);
-      document.getElementById('lViewers').textContent = `👁 ${viewers}`;
-      document.getElementById('aChatOnl').textContent = `● ${viewers} online`;
-    }, 5000);
-    addChatMsg('aChatMsgs', 'BrothersGym 🏋️', 'Stream started! Welcome everyone 🔥');
-    if (lBC) lBC.postMessage({type:'live_start'});
-    await api('POST', '/api/live/start');
-    floatNotif('🔴 You are LIVE!', 'Members can watch your stream', 'ok');
-  } catch (e) {
-    floatNotif('❌ Camera Error', 'Allow camera permission to go live', 'danger');
+  const url = document.getElementById('aLiveUrl').value.trim();
+  const title = document.getElementById('aLiveTitle').value.trim() || 'Gym Live Session';
+  if (!url) {
+    floatNotif('❌ No Link', 'Paste your YouTube or Facebook Live link first', 'danger');
+    return;
   }
-}
-async function flipCam() { aFacing = aFacing==='user'?'environment':'user'; if(aStream){aStream.getTracks().forEach(t=>t.stop()); adminGoLive();} }
-function toggleMic() { aMuted=!aMuted; if(aStream) aStream.getAudioTracks().forEach(t=>t.enabled=!aMuted); document.getElementById('micBtn').textContent=aMuted?'🔇':'🎙️'; }
-async function adminStopLive() {
-  if(aStream) aStream.getTracks().forEach(t=>t.stop());
-  clearInterval(aTimer); clearInterval(aAutoMsg);
-  const v=document.getElementById('lVid'); v.srcObject=null; v.style.display='none';
-  document.getElementById('lph').style.display='flex';
-  document.getElementById('lbadge').style.display='none';
-  document.getElementById('lctrl').style.display='none';
-  document.getElementById('lTimer').style.display='none';
-  document.getElementById('lInfo').textContent='Stream ended.';
-  addChatMsg('aChatMsgs', 'BrothersGym 🏋️', 'Stream ended. Thanks for watching! 💪');
-  if(lBC) lBC.postMessage({type:'live_stop'});
-  await api('POST', '/api/live/stop');
-  floatNotif('⏹ Stream Ended', '', 'info');
+  await api('POST', '/api/live/start', {url, title});
+  // Show ON state
+  document.getElementById('aLiveOff').style.display = 'none';
+  document.getElementById('aLiveOn').style.display = 'block';
+  document.getElementById('aLiveTitle2').textContent = title;
+  document.getElementById('aLiveUrlShow').textContent = url;
+  // Set iframe
+  const embedUrl = getLiveEmbedUrl(url);
+  document.getElementById('aLiveFrame').src = embedUrl;
+  // Start timer
+  aLiveSecs = 0;
+  clearInterval(aLiveTimer);
+  aLiveTimer = setInterval(() => {
+    aLiveSecs++;
+    const m = String(Math.floor(aLiveSecs/60)).padStart(2,'0');
+    const s = String(aLiveSecs%60).padStart(2,'0');
+    const el = document.getElementById('aLiveTimer');
+    if (el) el.textContent = m + ':' + s;
+  }, 1000);
+  addChatMsg('aChatMsgs', 'BrothersGym 🏋️', '🔴 Stream started! Members can now watch. 💪');
+  floatNotif('🔴 You are LIVE!', 'Members can now watch in their portal', 'ok');
 }
 
-// ── Member live viewer ──
+async function adminStopLive() {
+  clearInterval(aLiveTimer);
+  document.getElementById('aLiveFrame').src = '';
+  document.getElementById('aLiveOff').style.display = 'block';
+  document.getElementById('aLiveOn').style.display = 'none';
+  document.getElementById('aLiveUrl').value = '';
+  document.getElementById('aLiveTitle').value = '';
+  await api('POST', '/api/live/stop');
+  addChatMsg('aChatMsgs', 'BrothersGym 🏋️', 'Stream ended. Thanks everyone! 💪');
+  floatNotif('⏹ Stream Ended', 'Members have been notified', 'info');
+}
+
+// ── Member: Watch Live ──
 async function checkLiveStatus() {
   try {
     const data = await api('GET', '/api/live/status');
-    const dot = document.getElementById('mLiveDot');
+    const dot  = document.getElementById('mLiveDot');
     const stat = document.getElementById('mLiveStat');
     if (!dot) return;
     if (data && data.live) {
-      dot.style.background = 'var(--p)'; dot.style.animation = 'blk 1s ease infinite';
+      dot.style.background = 'var(--p)';
+      dot.style.animation  = 'blk 1s ease infinite';
       stat.textContent = 'LIVE NOW 🔴';
-      document.getElementById('mChatOnl').textContent = '● LIVE';
-      const offEl = document.getElementById('mLiveOff');
-      const onEl = document.getElementById('mLiveOn');
-      if (offEl) offEl.style.display = 'none';
-      if (onEl) onEl.style.display = 'block';
+      const titleEl = document.getElementById('mLiveTitle');
+      if (titleEl && data.title) titleEl.textContent = '— ' + data.title;
+      document.getElementById('mLiveOff').style.display = 'none';
+      document.getElementById('mLiveOn').style.display  = 'block';
+      // Set embed
+      const frame = document.getElementById('mLiveFrame');
+      const newSrc = getLiveEmbedUrl(data.url || '');
+      if (frame && frame.src !== newSrc) frame.src = newSrc;
+      // Open link
+      const openBtn = document.getElementById('mLiveOpenBtn');
+      const urlLink = document.getElementById('mLiveUrlLink');
+      if (openBtn) openBtn.href = data.url || '#';
+      if (urlLink) urlLink.textContent = data.url || '';
     } else {
-      dot.style.background = '#555'; dot.style.animation = 'none';
+      dot.style.background = '#555';
+      dot.style.animation  = 'none';
       stat.textContent = 'Offline';
-      document.getElementById('mChatOnl').textContent = '● offline';
-      const offEl = document.getElementById('mLiveOff');
-      const onEl = document.getElementById('mLiveOn');
-      if (offEl) offEl.style.display = 'block';
-      if (onEl) onEl.style.display = 'none';
+      const titleEl = document.getElementById('mLiveTitle');
+      if (titleEl) titleEl.textContent = '';
+      document.getElementById('mLiveOff').style.display = 'block';
+      document.getElementById('mLiveOn').style.display  = 'none';
+      const frame = document.getElementById('mLiveFrame');
+      if (frame) frame.src = '';
     }
   } catch(e) {}
 }
-if (lBC) {
-  lBC.onmessage = e => {
-    if (e.data.type === 'live_start') {
-      floatNotif('🔴 Admin is LIVE!', 'Go to Watch Live to see the stream', 'info');
-      checkLiveStatus();
+
+// Also load live state when admin opens the live page
+async function loadAdminLiveState() {
+  try {
+    const data = await api('GET', '/api/live/status');
+    if (data && data.live) {
+      document.getElementById('aLiveOff').style.display = 'none';
+      document.getElementById('aLiveOn').style.display = 'block';
+      document.getElementById('aLiveTitle2').textContent = data.title || '';
+      document.getElementById('aLiveUrlShow').textContent = data.url || '';
+      document.getElementById('aLiveFrame').src = getLiveEmbedUrl(data.url || '');
     }
-    if (e.data.type === 'live_stop') checkLiveStatus();
-  };
+  } catch(e) {}
 }
 
 // ── Shared chat ──

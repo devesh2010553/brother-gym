@@ -1,516 +1,503 @@
 // ════════════════════════════════════════════════════════
-//  Brothers Gym Portal — Node.js / Express Backend
-//  Handles: Real OTP via Fast2SMS, Members, Payments, Auth
+//  Brothers Gym Portal — Express Backend
+//  DB: MongoDB Atlas  |  SMS: Fast2SMS  |  Live: YouTube
 // ════════════════════════════════════════════════════════
-
 require('dotenv').config();
 const express  = require('express');
 const axios    = require('axios');
 const cors     = require('cors');
 const path     = require('path');
-const fs       = require('fs');
 const { v4: uuidv4 } = require('uuid');
 const rateLimit = require('express-rate-limit');
+const { MongoClient } = require('mongodb');
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
 
-// ── Trust Render proxy so REAL client IPs are used ─────
-// Without this, all users share ONE IP on Render and
-// hit the rate limit together after just a few requests!
 app.set('trust proxy', 1);
-
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, '../public')));
+app.get('/portal', (req,res) => res.sendFile(path.join(__dirname,'../public/portal.html')));
+app.get('/',       (req,res) => res.sendFile(path.join(__dirname,'../public/index.html')));
 
-// ── Named routes so /portal works (not just /portal.html) ──
-app.get('/portal', (req, res) => {
-  res.sendFile(path.join(__dirname, '../public/portal.html'));
-});
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, '../public/index.html'));
-});
-
-// ── Rate limiters — keyed by PHONE NUMBER not IP ───────
-// This means each person's phone can only send 3 OTPs
-// per 5 min, but different people are NOT blocked together
+// ── Rate limiters ────────────────────────────────────────
 const otpLimiter = rateLimit({
-  windowMs: 5 * 60 * 1000,
-  max: 3,
-  keyGenerator: (req) => {
-    const phone = String(req.body && req.body.phone ? req.body.phone : '').replace(/\D/g, '').slice(-10);
-    return phone.length === 10 ? 'phone_' + phone : req.ip;
+  windowMs: 5*60*1000, max: 3,
+  keyGenerator: req => {
+    const p = String(req.body?.phone||'').replace(/\D/g,'').slice(-10);
+    return p.length===10 ? 'otp_'+p : req.ip;
   },
-  handler: (req, res) => {
-    res.json({ success: false, message: 'Too many OTP requests for this number. Please wait 5 minutes.' });
-  }
+  handler: (req,res) => res.json({success:false,message:'Too many OTP requests. Wait 5 minutes.'})
 });
-
 const loginLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 30,
-  keyGenerator: (req) => {
-    const phone = String(req.body && req.body.phone ? req.body.phone : '').replace(/\D/g, '').slice(-10);
-    return phone.length === 10 ? 'login_' + phone : req.ip;
+  windowMs: 15*60*1000, max: 20,
+  keyGenerator: req => {
+    const p = String(req.body?.phone||'').replace(/\D/g,'').slice(-10);
+    return p.length===10 ? 'login_'+p : req.ip;
   },
-  handler: (req, res) => {
-    res.json({ success: false, message: 'Too many login attempts. Please wait 15 minutes.' });
-  }
+  handler: (req,res) => res.json({success:false,message:'Too many login attempts. Wait 15 minutes.'})
 });
 
 // ════════════════════════════════════════════════════════
-//  FILE-BASED DATA STORE
+//  MONGODB
 // ════════════════════════════════════════════════════════
-const DATA_DIR = path.join(__dirname, '../data');
-if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+let db;
+const PLAN_PRICE = {monthly:800, quarterly:2100, annual:7500};
+const PLAN_DAYS  = {monthly:30,  quarterly:90,   annual:365};
 
-function readJSON(file) {
-  const fp = path.join(DATA_DIR, file);
-  if (!fs.existsSync(fp)) return [];
-  try { return JSON.parse(fs.readFileSync(fp, 'utf8')); } catch (e) { return []; }
-}
-function writeJSON(file, data) {
-  fs.writeFileSync(path.join(DATA_DIR, file), JSON.stringify(data, null, 2));
+async function connectDB() {
+  const uri = process.env.MONGO_URI;
+  if (!uri) {
+    console.error('\n❌  MONGO_URI is not set!');
+    console.error('    Go to Render → Your Service → Environment → Add MONGO_URI');
+    console.error('    Get free URI from https://cloud.mongodb.com\n');
+    process.exit(1);
+  }
+  const client = new MongoClient(uri, {serverSelectionTimeoutMS:10000});
+  await client.connect();
+  db = client.db('brothers_gym');
+  // indexes
+  await db.collection('members').createIndex({phone:1},{unique:true});
+  await db.collection('payments').createIndex({memberId:1});
+  await db.collection('payments').createIndex({createdAt:-1});
+  await db.collection('notifications').createIndex({time:-1});
+  console.log('✅  MongoDB Atlas connected — brothers_gym database ready');
+  // NO seed data — gym owner adds real members
 }
 
-function seedData() {
-  if (readJSON('members.json').length > 0) return;
-  const today = new Date();
-  function dago(n) { const d = new Date(today); d.setDate(d.getDate() - n); return d.toISOString().split('T')[0]; }
-  const members = [
-    { id: 'M001', name: 'Rahul Sharma',  phone: '9876543210', plan: 'monthly',   admissionDate: dago(5),  gender: 'Male',   notes: '',           emergency: '', paymentStatus: 'paid',    password: 'pass123' },
-    { id: 'M002', name: 'Priya Singh',   phone: '9876543211', plan: 'quarterly', admissionDate: dago(85), gender: 'Female', notes: '',           emergency: '', paymentStatus: 'paid',    password: 'pass123' },
-    { id: 'M003', name: 'Amit Yadav',    phone: '9876543212', plan: 'annual',    admissionDate: dago(10), gender: 'Male',   notes: 'Knee issue', emergency: '', paymentStatus: 'paid',    password: 'pass123' },
-    { id: 'M004', name: 'Sunita Devi',   phone: '9876543213', plan: 'monthly',   admissionDate: dago(27), gender: 'Female', notes: '',           emergency: '', paymentStatus: 'pending', password: 'pass123' },
-    { id: 'M005', name: 'Vikram Patel',  phone: '9876543214', plan: 'monthly',   admissionDate: dago(25), gender: 'Male',   notes: '',           emergency: '', paymentStatus: 'paid',    password: 'pass123' },
-  ];
-  writeJSON('members.json', members);
-  const PLAN_PRICE = { monthly: 800, quarterly: 2100, annual: 7500 };
-  const payments = members.map(m => ({
-    id: 'P' + uuidv4().substr(0, 6).toUpperCase(),
-    memberId: m.id, memberName: m.name, phone: m.phone,
-    plan: m.plan, amount: PLAN_PRICE[m.plan],
-    date: m.admissionDate, status: m.paymentStatus
-  }));
-  writeJSON('payments.json', payments);
-  writeJSON('notifications.json', []);
-  console.log('✅ Demo data seeded.');
+function sanitize(m) {
+  if (!m) return null;
+  const {password, _id, ...safe} = m;
+  return safe;
 }
-seedData();
 
 // ════════════════════════════════════════════════════════
-//  IN-MEMORY OTP STORE
+//  OTP — Fast2SMS
+//  Free plan uses route:'v3' (DLT-free variable route)
+//  If that fails, falls back to route:'otp'
 // ════════════════════════════════════════════════════════
 const otpStore = {};
 
 function generateOTP() {
-  return Math.floor(100000 + Math.random() * 900000).toString();
+  return Math.floor(100000 + Math.random()*900000).toString();
 }
 
-// ════════════════════════════════════════════════════════
-//  REAL SMS via Fast2SMS — FIXED API CALL
-// ════════════════════════════════════════════════════════
 async function sendSMS(phone, otp) {
   const apiKey = process.env.FAST2SMS_API_KEY;
 
-  // DEV MODE — no API key set
+  // DEV MODE — no API key
   if (!apiKey || apiKey === 'YOUR_FAST2SMS_API_KEY_HERE') {
-    console.log('\n========================================');
-    console.log('📱 [DEV MODE] OTP for ' + phone + ': ' + otp);
-    console.log('Add FAST2SMS_API_KEY to .env for real SMS');
-    console.log('========================================\n');
-    return { success: true, devMode: true, otp: otp };
+    console.log('\n══════════════════════════════════════');
+    console.log('📱  [DEV MODE] OTP for ' + phone + ' → ' + otp);
+    console.log('    Add FAST2SMS_API_KEY in .env for real SMS');
+    console.log('══════════════════════════════════════\n');
+    return {success:true, devMode:true, otp};
   }
 
-  // PRODUCTION — Fast2SMS Quick SMS route (most reliable for OTP)
+  console.log('📤  Sending OTP ' + otp + ' to ' + phone + ' via Fast2SMS...');
+
+  // ── Attempt 1: route v3 (works on free Fast2SMS accounts) ──
   try {
-    console.log('📤 Sending OTP ' + otp + ' to ' + phone + ' via Fast2SMS...');
-
-    const response = await axios({
-      method: 'POST',
-      url: 'https://www.fast2sms.com/dev/bulkV2',
-      headers: {
-        'authorization': apiKey,
-        'Content-Type': 'application/json',
-        'cache-control': 'no-cache'
-      },
-      data: {
-        route: 'q',                                    // Quick SMS route — no DLT needed
-        message: 'Your Brothers Gym OTP is: ' + otp + '. Valid for 5 minutes. Do not share with anyone.',
-        language: 'english',
-        flash: 0,
-        numbers: phone
-      },
-      timeout: 15000
-    });
-
-    console.log('Fast2SMS response:', JSON.stringify(response.data));
-
-    if (response.data.return === true) {
-      console.log('✅ OTP SMS sent successfully to ' + phone);
-      return { success: true };
-    } else {
-      // If quick route fails, try OTP route as backup
-      console.log('Quick route failed, trying OTP route...');
-      return await sendSMSOTPRoute(phone, otp, apiKey);
-    }
-
-  } catch (err) {
-    console.error('Fast2SMS error:', err.message);
-    if (err.response) {
-      console.error('Response data:', JSON.stringify(err.response.data));
-    }
-    // Try backup route
-    return await sendSMSOTPRoute(phone, otp, apiKey);
-  }
-}
-
-// Backup: Fast2SMS dedicated OTP route
-async function sendSMSOTPRoute(phone, otp, apiKey) {
-  try {
-    const response = await axios({
-      method: 'GET',
-      url: 'https://www.fast2sms.com/dev/bulkV2',
+    const resp = await axios.get('https://www.fast2sms.com/dev/bulkV2', {
       params: {
         authorization: apiKey,
         variables_values: otp,
         route: 'otp',
         numbers: phone
       },
-      headers: { 'cache-control': 'no-cache' },
+      headers: {'cache-control':'no-cache'},
       timeout: 15000
     });
-    console.log('OTP route response:', JSON.stringify(response.data));
-    if (response.data.return === true) {
-      console.log('✅ OTP sent via backup route to ' + phone);
-      return { success: true };
+    console.log('Fast2SMS response:', JSON.stringify(resp.data));
+    if (resp.data && resp.data.return === true) {
+      console.log('✅  SMS sent successfully to ' + phone);
+      return {success:true};
     }
-    console.error('Both routes failed:', response.data);
-    return { success: false, error: (response.data.message || ['SMS failed'])[0] };
-  } catch (err2) {
-    console.error('Backup route also failed:', err2.message);
-    return { success: false, error: 'SMS service unavailable. Please try again.' };
+    const errMsg = Array.isArray(resp.data?.message) ? resp.data.message[0] : (resp.data?.message || 'SMS failed');
+    console.log('OTP route failed:', errMsg, '— trying quick route...');
+    return await sendSMSQuickRoute(phone, otp, apiKey);
+  } catch(e) {
+    console.error('OTP route error:', e.message);
+    return await sendSMSQuickRoute(phone, otp, apiKey);
   }
 }
 
-// ════════════════════════════════════════════════════════
-//  OTP ROUTES
-// ════════════════════════════════════════════════════════
-
-// POST /api/otp/send  { phone }
-app.post('/api/otp/send', otpLimiter, async (req, res) => {
-  let { phone } = req.body;
-  phone = String(phone || '').replace(/\D/g, '').slice(-10);
-
-  if (!phone || phone.length !== 10) {
-    return res.json({ success: false, message: 'Enter a valid 10-digit Indian phone number.' });
+// ── Attempt 2: Quick SMS route (paid but try anyway) ──
+async function sendSMSQuickRoute(phone, otp, apiKey) {
+  try {
+    const resp = await axios.post('https://www.fast2sms.com/dev/bulkV2', {
+      route: 'q',
+      message: 'Your Brothers Gym OTP is ' + otp + '. Valid for 5 minutes. Do not share.',
+      language: 'english',
+      flash: 0,
+      numbers: phone
+    }, {
+      headers: {
+        'authorization': apiKey,
+        'Content-Type': 'application/json',
+        'cache-control': 'no-cache'
+      },
+      timeout: 15000
+    });
+    console.log('Quick route response:', JSON.stringify(resp.data));
+    if (resp.data && resp.data.return === true) {
+      console.log('✅  SMS sent via quick route to ' + phone);
+      return {success:true};
+    }
+    const errMsg = Array.isArray(resp.data?.message) ? resp.data.message[0] : (resp.data?.message || 'Both SMS routes failed');
+    return {success:false, error: errMsg};
+  } catch(e) {
+    console.error('Quick route error:', e.message);
+    if (e.response) console.error('Response:', JSON.stringify(e.response.data));
+    return {success:false, error: 'Fast2SMS unreachable. Check your API key or account balance.'};
   }
+}
+
+// ── OTP Routes ───────────────────────────────────────────
+app.post('/api/otp/send', otpLimiter, async (req,res) => {
+  let {phone} = req.body;
+  phone = String(phone||'').replace(/\D/g,'').slice(-10);
+  if (!phone || phone.length !== 10)
+    return res.json({success:false, message:'Enter a valid 10-digit phone number.'});
 
   const otp = generateOTP();
-  const expiresAt = Date.now() + 5 * 60 * 1000; // 5 minutes
-  otpStore[phone] = { otp, expiresAt, attempts: 0 };
-
-  console.log('OTP request for phone: ' + phone);
+  otpStore[phone] = {otp, expiresAt: Date.now()+5*60*1000, attempts:0};
   const result = await sendSMS(phone, otp);
 
   if (!result.success) {
-    // Clean up stored OTP since SMS failed
     delete otpStore[phone];
-    return res.json({ success: false, message: 'SMS failed: ' + (result.error || 'Unknown error. Check server logs.') });
+    return res.json({success:false, message: result.error || 'SMS failed. Check Fast2SMS API key.'});
   }
-
-  const responseData = { success: true, message: 'OTP sent to your phone!' };
   if (result.devMode) {
-    responseData.devMode = true;
-    responseData.devOtp  = otp;
-    responseData.message = '[DEV MODE] OTP: ' + otp + ' — Add FAST2SMS_API_KEY in Render Environment Variables for real SMS';
+    return res.json({success:true, devMode:true, devOtp:otp, message:'[DEV] OTP is: '+otp+' (No API key set)'});
   }
-  res.json(responseData);
+  res.json({success:true, message:'OTP sent to +91'+phone});
 });
 
-// POST /api/otp/verify  { phone, otp }
-app.post('/api/otp/verify', (req, res) => {
-  let { phone, otp } = req.body;
-  phone = String(phone || '').replace(/\D/g, '').slice(-10);
-
+app.post('/api/otp/verify', (req,res) => {
+  let {phone, otp} = req.body;
+  phone = String(phone||'').replace(/\D/g,'').slice(-10);
   const stored = otpStore[phone];
-  if (!stored) {
-    return res.json({ success: false, message: 'No OTP found for this number. Please request a new one.' });
-  }
+  if (!stored) return res.json({success:false, message:'No OTP found. Please request a new one.'});
   if (Date.now() > stored.expiresAt) {
     delete otpStore[phone];
-    return res.json({ success: false, message: 'OTP has expired. Please request a new one.' });
+    return res.json({success:false, message:'OTP expired. Request a new one.'});
   }
-  stored.attempts = (stored.attempts || 0) + 1;
+  stored.attempts++;
   if (stored.attempts > 5) {
     delete otpStore[phone];
-    return res.json({ success: false, message: 'Too many wrong attempts. Request a new OTP.' });
+    return res.json({success:false, message:'Too many wrong attempts. Request a new OTP.'});
   }
-  if (String(stored.otp) !== String(otp).trim()) {
-    return res.json({ success: false, message: 'Wrong OTP. ' + (5 - stored.attempts) + ' attempts left.' });
-  }
-
+  if (String(stored.otp) !== String(otp||'').trim())
+    return res.json({success:false, message:'Wrong OTP. '+(5-stored.attempts)+' attempts left.'});
   delete otpStore[phone];
-  res.json({ success: true, message: 'OTP verified successfully!' });
+  res.json({success:true, message:'OTP verified!'});
 });
 
 // ════════════════════════════════════════════════════════
-//  AUTH ROUTES
+//  AUTH
 // ════════════════════════════════════════════════════════
-
-app.post('/api/auth/signup', (req, res) => {
-  const { name, phone, password } = req.body;
-  const cleanPhone = String(phone || '').replace(/\D/g, '').slice(-10);
-  if (!name || !cleanPhone || !password) return res.json({ success: false, message: 'All fields required.' });
-  if (password.length < 6) return res.json({ success: false, message: 'Password must be at least 6 characters.' });
-
-  const members = readJSON('members.json');
-  const existing = members.find(m => m.phone === cleanPhone);
-  if (existing && existing.password) {
-    return res.json({ success: false, message: 'Account already exists with this phone. Please login.' });
-  }
-  if (existing) {
-    existing.password = password;
-    writeJSON('members.json', members);
-    return res.json({ success: true, message: 'Account activated!', member: sanitize(existing) });
-  }
-
-  const id = 'M' + Date.now().toString().slice(-6);
-  const newMember = { id, name, phone: cleanPhone, plan: 'monthly', admissionDate: new Date().toISOString().split('T')[0], gender: '', notes: '', emergency: '', paymentStatus: 'pending', password };
-  members.push(newMember);
-  writeJSON('members.json', members);
-  res.json({ success: true, message: 'Account created!', member: sanitize(newMember) });
-});
-
-app.post('/api/auth/login', loginLimiter, (req, res) => {
-  const { phone, password } = req.body;
-  const cleanPhone = String(phone || '').replace(/\D/g, '').slice(-10);
-  const members = readJSON('members.json');
-  const m = members.find(x => x.phone === cleanPhone && x.password === password);
-  if (!m) return res.json({ success: false, message: 'Wrong phone number or password.' });
-  res.json({ success: true, member: sanitize(m) });
-});
-
-app.post('/api/auth/reset-password', (req, res) => {
-  const { phone, password } = req.body;
-  const cleanPhone = String(phone || '').replace(/\D/g, '').slice(-10);
-  if (!password || password.length < 6) return res.json({ success: false, message: 'Password too short.' });
-  const members = readJSON('members.json');
-  const idx = members.findIndex(m => m.phone === cleanPhone);
-  if (idx === -1) return res.json({ success: false, message: 'No account found with this phone number.' });
-  members[idx].password = password;
-  writeJSON('members.json', members);
-  res.json({ success: true, message: 'Password reset successfully!' });
-});
-
-app.post('/api/auth/change-password', (req, res) => {
-  const { phone, oldPassword, newPassword } = req.body;
-  const cleanPhone = String(phone || '').replace(/\D/g, '').slice(-10);
-  const members = readJSON('members.json');
-  const idx = members.findIndex(m => m.phone === cleanPhone);
-  if (idx === -1) return res.json({ success: false, message: 'Account not found.' });
-  if (members[idx].password !== oldPassword) return res.json({ success: false, message: 'Current password is wrong.' });
-  if (newPassword.length < 6) return res.json({ success: false, message: 'New password too short.' });
-  members[idx].password = newPassword;
-  writeJSON('members.json', members);
-  res.json({ success: true, message: 'Password changed successfully!' });
-});
-
-app.post('/api/auth/admin', (req, res) => {
-  const { password } = req.body;
-  if (password !== process.env.ADMIN_PASSWORD) {
-    return res.json({ success: false, message: 'Wrong admin password.' });
-  }
-  res.json({ success: true });
-});
-
-// ════════════════════════════════════════════════════════
-//  MEMBER ROUTES
-// ════════════════════════════════════════════════════════
-function sanitize(m) {
-  const { password, ...safe } = m;
-  return safe;
-}
-
-app.get('/api/members', (req, res) => {
-  res.json(readJSON('members.json').map(sanitize));
-});
-
-app.post('/api/members', (req, res) => {
-  const { name, phone, plan, admissionDate, gender, emergency, notes, paymentStatus, password } = req.body;
-  const cleanPhone = String(phone || '').replace(/\D/g, '').slice(-10);
-  if (!name || !cleanPhone || !plan || !admissionDate) {
-    return res.json({ success: false, message: 'Name, phone, plan and date are required.' });
-  }
-  // Password: use provided password, fall back to gym123 if missing (e.g. old API calls)
-  const assignedPass = (password && password.length >= 6) ? password : 'gym123';
-
-  const members = readJSON('members.json');
-  const existing = members.find(m => m.phone === cleanPhone);
-  const PLAN_PRICE = { monthly: 800, quarterly: 2100, annual: 7500 };
-
-  if (existing) {
-    existing.plan = plan; existing.admissionDate = admissionDate;
-    existing.gender = gender || existing.gender;
-    existing.emergency = emergency || existing.emergency;
-    existing.notes = notes || existing.notes;
-    existing.paymentStatus = paymentStatus || 'pending';
-    // Only update password if a new one was explicitly provided
-    if (password && password.length >= 6) existing.password = password;
-    writeJSON('members.json', members);
-    addPayment({ memberId: existing.id, memberName: existing.name, phone: cleanPhone, plan, amount: PLAN_PRICE[plan], date: admissionDate, status: paymentStatus || 'pending' });
-    return res.json({ success: true, message: existing.name + "'s membership updated.", member: sanitize(existing) });
-  }
-
-  const id = 'M' + Date.now().toString().slice(-6);
-  const newMember = { id, name, phone: cleanPhone, plan, admissionDate, gender: gender || '', emergency: emergency || '', notes: notes || '', paymentStatus: paymentStatus || 'pending', password: assignedPass };
-  members.push(newMember);
-  writeJSON('members.json', members);
-  addPayment({ memberId: id, memberName: name, phone: cleanPhone, plan, amount: PLAN_PRICE[plan], date: admissionDate, status: paymentStatus || 'pending' });
-  res.json({ success: true, message: name + ' added successfully! Password: ' + assignedPass, member: sanitize(newMember) });
-});
-
-app.put('/api/members/:id', (req, res) => {
-  const members = readJSON('members.json');
-  const idx = members.findIndex(m => m.id === req.params.id);
-  if (idx === -1) return res.json({ success: false, message: 'Member not found.' });
-  Object.assign(members[idx], req.body);
-  writeJSON('members.json', members);
-  res.json({ success: true, member: sanitize(members[idx]) });
-});
-
-app.delete('/api/members/:id', (req, res) => {
-  const members = readJSON('members.json');
-  writeJSON('members.json', members.filter(m => m.id !== req.params.id));
-  res.json({ success: true });
-});
-
-app.post('/api/members/:id/renew', (req, res) => {
-  const { plan, date, paymentStatus } = req.body;
-  const members = readJSON('members.json');
-  const idx = members.findIndex(m => m.id === req.params.id);
-  if (idx === -1) return res.json({ success: false, message: 'Member not found.' });
-  const PLAN_PRICE = { monthly: 800, quarterly: 2100, annual: 7500 };
-  members[idx].plan = plan;
-  members[idx].admissionDate = date;
-  members[idx].paymentStatus = paymentStatus;
-  writeJSON('members.json', members);
-  addPayment({ memberId: members[idx].id, memberName: members[idx].name, phone: members[idx].phone, plan, amount: PLAN_PRICE[plan], date, status: paymentStatus });
-  addNotification({ type: 'success', icon: '✅', title: members[idx].name + ' membership renewed', desc: 'New plan: ' + plan + '. Renewed on ' + date + '.', memberId: members[idx].id });
-  res.json({ success: true, member: sanitize(members[idx]) });
-});
-
-// ════════════════════════════════════════════════════════
-//  PAYMENT ROUTES
-// ════════════════════════════════════════════════════════
-function addPayment(data) {
-  const payments = readJSON('payments.json');
-  payments.unshift({ id: 'P' + uuidv4().substr(0, 6).toUpperCase(), ...data, createdAt: new Date().toISOString() });
-  writeJSON('payments.json', payments);
-}
-
-app.get('/api/payments', (req, res) => res.json(readJSON('payments.json')));
-
-app.get('/api/payments/member/:id', (req, res) => {
-  res.json(readJSON('payments.json').filter(p => p.memberId === req.params.id));
-});
-
-app.put('/api/payments/:id/mark-paid', (req, res) => {
-  const payments = readJSON('payments.json');
-  const p = payments.find(x => x.id === req.params.id);
-  if (!p) return res.json({ success: false });
-  p.status = 'paid';
-  writeJSON('payments.json', payments);
-  const members = readJSON('members.json');
-  const m = members.find(x => x.id === p.memberId);
-  if (m) { m.paymentStatus = 'paid'; writeJSON('members.json', members); }
-  addNotification({ type: 'success', icon: '💳', title: 'Payment confirmed for ' + p.memberName, desc: '₹' + p.amount + ' — ' + p.plan, memberId: p.memberId });
-  res.json({ success: true });
-});
-
-// ════════════════════════════════════════════════════════
-//  NOTIFICATION ROUTES
-// ════════════════════════════════════════════════════════
-function addNotification(data) {
-  const notifs = readJSON('notifications.json');
-  notifs.unshift({ id: uuidv4(), ...data, read: false, time: new Date().toISOString() });
-  if (notifs.length > 200) notifs.splice(200);
-  writeJSON('notifications.json', notifs);
-}
-
-app.get('/api/notifications', (req, res) => res.json(readJSON('notifications.json')));
-
-app.post('/api/notifications/check-expiry', (req, res) => {
-  const PLAN_DAYS = { monthly: 30, quarterly: 90, annual: 365 };
-  const members = readJSON('members.json');
-  const notifs = readJSON('notifications.json');
-  const today = new Date(); today.setHours(0, 0, 0, 0);
-  const todayStr = today.toISOString().split('T')[0];
-  let added = 0;
-  members.forEach(m => {
-    const exp = new Date(m.admissionDate);
-    exp.setDate(exp.getDate() + PLAN_DAYS[m.plan]);
-    const daysLeft = Math.ceil((exp - today) / 86400000);
-    const key = 'expiry_' + m.id + '_' + todayStr;
-    if (notifs.find(n => n.key === key)) return;
-    if (daysLeft <= 0) {
-      addNotification({ key, type: 'danger', icon: '🚨', title: m.name + "'s membership EXPIRED", desc: 'Phone: ' + m.phone + ' — Collect renewal fee', memberId: m.id });
-      added++;
-    } else if (daysLeft <= 3) {
-      addNotification({ key, type: 'danger', icon: '⚠️', title: m.name + ' — ' + daysLeft + ' day(s) left!', desc: 'Phone: ' + m.phone + ' — Expiring very soon', memberId: m.id });
-      added++;
-    } else if (daysLeft <= 7) {
-      addNotification({ key, type: 'warn', icon: '🔔', title: m.name + ' — ' + daysLeft + ' days left', desc: 'Phone: ' + m.phone + ' — Expiring soon', memberId: m.id });
-      added++;
+app.post('/api/auth/signup', async (req,res) => {
+  const {name, phone, password} = req.body;
+  const cp = String(phone||'').replace(/\D/g,'').slice(-10);
+  if (!name || !cp || !password) return res.json({success:false, message:'All fields required.'});
+  if (password.length < 6) return res.json({success:false, message:'Password must be at least 6 characters.'});
+  try {
+    const ex = await db.collection('members').findOne({phone:cp});
+    if (ex && ex.password) return res.json({success:false, message:'Account already exists. Please login.'});
+    if (ex) {
+      await db.collection('members').updateOne({phone:cp}, {$set:{password, name}});
+      const updated = await db.collection('members').findOne({phone:cp});
+      return res.json({success:true, message:'Account activated! Welcome '+name, member:sanitize(updated)});
     }
+    // New member signup — pending approval by admin
+    const id = 'M' + Date.now().toString().slice(-6);
+    const m = {id, name, phone:cp, plan:'monthly', admissionDate:new Date().toISOString().split('T')[0], gender:'', notes:'Signed up via app — pending admin approval', emergency:'', paymentStatus:'pending', password};
+    await db.collection('members').insertOne(m);
+    res.json({success:true, message:'Account created! Visit gym to activate membership.', member:sanitize(m)});
+  } catch(e) {
+    console.error('Signup error:', e.message);
+    res.json({success:false, message:'Server error. Please try again.'});
+  }
+});
+
+app.post('/api/auth/login', loginLimiter, async (req,res) => {
+  const {phone, password} = req.body;
+  const cp = String(phone||'').replace(/\D/g,'').slice(-10);
+  try {
+    const m = await db.collection('members').findOne({phone:cp, password});
+    if (!m) return res.json({success:false, message:'Wrong phone number or password.'});
+    res.json({success:true, member:sanitize(m)});
+  } catch(e) {
+    res.json({success:false, message:'Server error. Please try again.'});
+  }
+});
+
+app.post('/api/auth/reset-password', async (req,res) => {
+  const {phone, password} = req.body;
+  const cp = String(phone||'').replace(/\D/g,'').slice(-10);
+  if (!password || password.length < 6) return res.json({success:false, message:'Password must be at least 6 characters.'});
+  try {
+    const r = await db.collection('members').updateOne({phone:cp}, {$set:{password}});
+    if (r.matchedCount === 0) return res.json({success:false, message:'No account found with this phone number.'});
+    res.json({success:true, message:'Password reset successfully! Please login.'});
+  } catch(e) {
+    res.json({success:false, message:'Server error.'});
+  }
+});
+
+app.post('/api/auth/change-password', async (req,res) => {
+  const {phone, oldPassword, newPassword} = req.body;
+  const cp = String(phone||'').replace(/\D/g,'').slice(-10);
+  try {
+    const m = await db.collection('members').findOne({phone:cp});
+    if (!m) return res.json({success:false, message:'Account not found.'});
+    if (m.password !== oldPassword) return res.json({success:false, message:'Current password is incorrect.'});
+    if (!newPassword || newPassword.length < 6) return res.json({success:false, message:'New password must be at least 6 characters.'});
+    await db.collection('members').updateOne({phone:cp}, {$set:{password:newPassword}});
+    res.json({success:true, message:'Password changed successfully!'});
+  } catch(e) {
+    res.json({success:false, message:'Server error.'});
+  }
+});
+
+app.post('/api/auth/admin', (req,res) => {
+  const adminPass = process.env.ADMIN_PASSWORD || 'admin123';
+  if (req.body.password !== adminPass) return res.json({success:false, message:'Wrong admin password.'});
+  res.json({success:true});
+});
+
+// ════════════════════════════════════════════════════════
+//  MEMBERS
+// ════════════════════════════════════════════════════════
+app.get('/api/members', async (req,res) => {
+  try {
+    const members = await db.collection('members').find({}).sort({admissionDate:-1}).toArray();
+    res.json(members.map(sanitize));
+  } catch(e) {
+    res.json([]);
+  }
+});
+
+app.post('/api/members', async (req,res) => {
+  const {name, phone, plan, admissionDate, gender, emergency, notes, paymentStatus, password} = req.body;
+  const cp = String(phone||'').replace(/\D/g,'').slice(-10);
+  if (!name || !cp || !plan || !admissionDate)
+    return res.json({success:false, message:'Name, phone, plan and date are required.'});
+
+  const assignedPass = (password && password.length >= 6) ? password : 'gym123';
+  try {
+    const ex = await db.collection('members').findOne({phone:cp});
+    if (ex) {
+      // Update existing member
+      const upd = {plan, admissionDate, paymentStatus: paymentStatus||'pending'};
+      if (gender)    upd.gender    = gender;
+      if (emergency) upd.emergency = emergency;
+      if (notes)     upd.notes     = notes;
+      if (password && password.length >= 6) upd.password = password;
+      await db.collection('members').updateOne({phone:cp}, {$set:upd});
+      await addPayment({memberId:ex.id, memberName:ex.name, phone:cp, plan, amount:PLAN_PRICE[plan]||0, date:admissionDate, status:paymentStatus||'pending'});
+      const updated = await db.collection('members').findOne({phone:cp});
+      return res.json({success:true, message:ex.name+"'s membership updated.", member:sanitize(updated)});
+    }
+    // Add new member
+    const id = 'M' + Date.now().toString().slice(-6);
+    const nm = {id, name, phone:cp, plan, admissionDate, gender:gender||'', emergency:emergency||'', notes:notes||'', paymentStatus:paymentStatus||'pending', password:assignedPass};
+    await db.collection('members').insertOne(nm);
+    await addPayment({memberId:id, memberName:name, phone:cp, plan, amount:PLAN_PRICE[plan]||0, date:admissionDate, status:paymentStatus||'pending'});
+    res.json({success:true, message:name+' added! Login password: '+assignedPass, member:sanitize(nm)});
+  } catch(e) {
+    console.error('Add member error:', e.message);
+    if (e.code === 11000) return res.json({success:false, message:'Phone number already exists.'});
+    res.json({success:false, message:'Server error: '+e.message});
+  }
+});
+
+app.put('/api/members/:id', async (req,res) => {
+  try {
+    const {_id, password, ...upd} = req.body; // never overwrite password via edit
+    await db.collection('members').updateOne({id:req.params.id}, {$set:upd});
+    const updated = await db.collection('members').findOne({id:req.params.id});
+    res.json({success:true, member:sanitize(updated)});
+  } catch(e) {
+    res.json({success:false, message:'Update failed.'});
+  }
+});
+
+app.delete('/api/members/:id', async (req,res) => {
+  try {
+    await db.collection('members').deleteOne({id:req.params.id});
+    res.json({success:true});
+  } catch(e) {
+    res.json({success:false, message:'Delete failed.'});
+  }
+});
+
+app.post('/api/members/:id/renew', async (req,res) => {
+  const {plan, date, paymentStatus} = req.body;
+  try {
+    const m = await db.collection('members').findOne({id:req.params.id});
+    if (!m) return res.json({success:false, message:'Member not found.'});
+    await db.collection('members').updateOne({id:req.params.id}, {$set:{plan, admissionDate:date, paymentStatus}});
+    await addPayment({memberId:m.id, memberName:m.name, phone:m.phone, plan, amount:PLAN_PRICE[plan]||0, date, status:paymentStatus});
+    await addNotification({type:'success', icon:'✅', title:m.name+' membership renewed', desc:'New plan: '+plan+' from '+date, memberId:m.id});
+    const updated = await db.collection('members').findOne({id:req.params.id});
+    res.json({success:true, member:sanitize(updated)});
+  } catch(e) {
+    res.json({success:false, message:'Renewal failed.'});
+  }
+});
+
+// ════════════════════════════════════════════════════════
+//  PAYMENTS
+// ════════════════════════════════════════════════════════
+async function addPayment(data) {
+  await db.collection('payments').insertOne({
+    id: 'P'+uuidv4().substr(0,6).toUpperCase(),
+    ...data,
+    createdAt: new Date().toISOString()
   });
-  res.json({ success: true, added });
+}
+
+app.get('/api/payments', async (req,res) => {
+  try {
+    const p = await db.collection('payments').find({}).sort({createdAt:-1}).toArray();
+    res.json(p.map(({_id,...x}) => x));
+  } catch(e) { res.json([]); }
 });
 
-app.put('/api/notifications/:id/read', (req, res) => {
-  const notifs = readJSON('notifications.json');
-  const n = notifs.find(x => x.id === req.params.id);
-  if (n) n.read = true;
-  writeJSON('notifications.json', notifs);
-  res.json({ success: true });
+app.get('/api/payments/member/:id', async (req,res) => {
+  try {
+    const p = await db.collection('payments').find({memberId:req.params.id}).sort({createdAt:-1}).toArray();
+    res.json(p.map(({_id,...x}) => x));
+  } catch(e) { res.json([]); }
 });
 
-app.delete('/api/notifications', (req, res) => {
-  writeJSON('notifications.json', []);
-  res.json({ success: true });
+app.put('/api/payments/:id/mark-paid', async (req,res) => {
+  try {
+    await db.collection('payments').updateOne({id:req.params.id}, {$set:{status:'paid'}});
+    const p = await db.collection('payments').findOne({id:req.params.id});
+    if (p) {
+      await db.collection('members').updateOne({id:p.memberId}, {$set:{paymentStatus:'paid'}});
+      await addNotification({type:'success', icon:'💳', title:'Payment confirmed for '+p.memberName, desc:'₹'+p.amount+' — '+p.plan, memberId:p.memberId});
+    }
+    res.json({success:true});
+  } catch(e) { res.json({success:false}); }
 });
 
 // ════════════════════════════════════════════════════════
-//  LIVE STATUS
+//  NOTIFICATIONS
 // ════════════════════════════════════════════════════════
-let liveStatus = { live: false, startedAt: null };
-app.get('/api/live/status', (req, res) => res.json(liveStatus));
-app.post('/api/live/start',  (req, res) => { liveStatus = { live: true,  startedAt: new Date().toISOString() }; res.json({ success: true }); });
-app.post('/api/live/stop',   (req, res) => { liveStatus = { live: false, startedAt: null }; res.json({ success: true }); });
+async function addNotification(data) {
+  try {
+    const count = await db.collection('notifications').countDocuments();
+    if (count >= 200) {
+      const oldest = await db.collection('notifications').find({}).sort({time:1}).limit(count-199).toArray();
+      if (oldest.length) await db.collection('notifications').deleteMany({_id:{$in:oldest.map(n=>n._id)}});
+    }
+    await db.collection('notifications').insertOne({id:uuidv4(), ...data, read:false, time:new Date().toISOString()});
+  } catch(e) { console.error('addNotification error:', e.message); }
+}
+
+app.get('/api/notifications', async (req,res) => {
+  try {
+    const n = await db.collection('notifications').find({}).sort({time:-1}).toArray();
+    res.json(n.map(({_id,...x}) => x));
+  } catch(e) { res.json([]); }
+});
+
+app.post('/api/notifications/check-expiry', async (req,res) => {
+  try {
+    const members = await db.collection('members').find({}).toArray();
+    const today = new Date(); today.setHours(0,0,0,0);
+    const todayStr = today.toISOString().split('T')[0];
+    let added = 0;
+    for (const m of members) {
+      const exp = new Date(m.admissionDate);
+      exp.setDate(exp.getDate() + (PLAN_DAYS[m.plan]||30));
+      const daysLeft = Math.ceil((exp - today) / 86400000);
+      const key = 'expiry_'+m.id+'_'+todayStr;
+      const exists = await db.collection('notifications').findOne({key});
+      if (exists) continue;
+      if (daysLeft <= 0) {
+        await addNotification({key, type:'danger', icon:'🚨', title:m.name+"'s membership EXPIRED", desc:'Phone: '+m.phone+' — Collect renewal fee', memberId:m.id});
+        added++;
+      } else if (daysLeft <= 3) {
+        await addNotification({key, type:'danger', icon:'⚠️', title:m.name+' — '+daysLeft+' day(s) left!', desc:'Phone: '+m.phone+' — Expiring very soon', memberId:m.id});
+        added++;
+      } else if (daysLeft <= 7) {
+        await addNotification({key, type:'warn', icon:'🔔', title:m.name+' — '+daysLeft+' days left', desc:'Phone: '+m.phone+' — Expiring soon', memberId:m.id});
+        added++;
+      }
+    }
+    res.json({success:true, added});
+  } catch(e) { res.json({success:false, added:0}); }
+});
+
+app.put('/api/notifications/:id/read', async (req,res) => {
+  try {
+    await db.collection('notifications').updateOne({id:req.params.id}, {$set:{read:true}});
+    res.json({success:true});
+  } catch(e) { res.json({success:false}); }
+});
+
+app.delete('/api/notifications', async (req,res) => {
+  try {
+    await db.collection('notifications').deleteMany({});
+    res.json({success:true});
+  } catch(e) { res.json({success:false}); }
+});
 
 // ════════════════════════════════════════════════════════
-//  HEALTH CHECK & KEEP-ALIVE (for UptimeRobot)
+//  LIVE STREAM — YouTube/Facebook link based
+//  Admin sets a YouTube Live URL, members watch it
+//  This works across ALL devices (not just same browser)
 // ════════════════════════════════════════════════════════
-// Point UptimeRobot at: https://brothersgym-kly5.onrender.com/ping
-// Interval: every 5 minutes → prevents Render free-tier from sleeping
-app.get('/ping', (req, res) => {
-  res.json({ status: 'ok', time: new Date().toISOString(), gym: 'Brothers Gym Mathura 💪' });
+let liveStatus = {live:false, url:'', startedAt:null, title:'Gym Live Session'};
+
+app.get('/api/live/status', (req,res) => res.json(liveStatus));
+
+app.post('/api/live/start', (req,res) => {
+  const {url, title} = req.body;
+  liveStatus = {
+    live: true,
+    url: url || '',
+    title: title || 'Gym Live Session',
+    startedAt: new Date().toISOString()
+  };
+  console.log('🔴  Live stream started:', url);
+  res.json({success:true, liveStatus});
 });
-app.get('/health', (req, res) => res.json({ status: 'healthy' }));
+
+app.post('/api/live/stop', (req,res) => {
+  liveStatus = {live:false, url:'', startedAt:null, title:''};
+  console.log('⏹   Live stream stopped');
+  res.json({success:true});
+});
+
+// ════════════════════════════════════════════════════════
+//  HEALTH CHECK (UptimeRobot pings /ping every 5 min)
+// ════════════════════════════════════════════════════════
+app.get('/ping',   (req,res) => res.json({status:'ok', time:new Date().toISOString(), gym:'Brothers Gym Mathura 💪'}));
+app.get('/health', (req,res) => res.json({status:'healthy'}));
 
 // ════════════════════════════════════════════════════════
 //  START SERVER
 // ════════════════════════════════════════════════════════
-app.listen(PORT, () => {
-  console.log('\n🏋️  Brothers Gym Server running at http://localhost:' + PORT);
-  console.log('📱  Portal:  http://localhost:' + PORT + '/portal');
-  console.log('🌐  Website: http://localhost:' + PORT + '/');
-  const key = process.env.FAST2SMS_API_KEY;
-  if (!key || key === 'YOUR_FAST2SMS_API_KEY_HERE') {
-    console.log('\n⚠️  DEV MODE: No FAST2SMS_API_KEY set.');
-    console.log('   OTPs will be printed here in the console.\n');
-  } else {
-    console.log('\n✅  Fast2SMS configured — Real OTPs will be sent!\n');
-  }
+connectDB().then(() => {
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log('\n🏋️   Brothers Gym server running on port ' + PORT);
+    console.log('📱   Portal:  http://localhost:'+PORT+'/portal');
+    console.log('🌐   Website: http://localhost:'+PORT+'/');
+    const key = process.env.FAST2SMS_API_KEY;
+    if (!key || key === 'YOUR_FAST2SMS_API_KEY_HERE') {
+      console.log('\n⚠️   DEV MODE — No FAST2SMS_API_KEY set. OTPs will print here.\n');
+    } else {
+      console.log('\n✅   Fast2SMS configured — Real OTPs will be sent!\n');
+    }
+  });
+}).catch(err => {
+  console.error('\n❌  Startup failed:', err.message);
+  process.exit(1);
 });
