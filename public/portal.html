@@ -894,13 +894,22 @@ async function sendOTP(flow) {
     document.getElementById(grpId).style.display = 'block';
     btn.classList.remove('sending'); btn.textContent = 'Sent ✓';
 
-    // Show hint — only shows dev OTP when server is in dev mode
     const hint = document.getElementById(hintId);
     hint.style.display = 'block';
-    hint.textContent = data.devMode
-      ? `[DEV MODE] Your OTP: ${data.devOtp} — Add Fast2SMS API key for real SMS`
-      : '✅ OTP sent to your phone! Check SMS. Valid for 5 minutes.';
-    hint.className = `msg ${data.devMode ? 'info' : 'ok'}`;
+    if (data.screenMode) {
+      // SMS failed — show OTP directly on screen in a big box
+      hint.innerHTML = '<div style="text-align:center;padding:8px 0;">' +
+        '<div style="font-size:11px;font-weight:700;letter-spacing:2px;color:var(--yw);margin-bottom:6px;">⚠️ SMS UNAVAILABLE — YOUR OTP IS:</div>' +
+        '<div style="font-size:38px;font-weight:900;letter-spacing:12px;color:var(--tx);font-family:var(--fd);">' + data.screenOtp + '</div>' +
+        '<div style="font-size:11px;color:var(--mu);margin-top:4px;">Copy this code into the box above ↑</div></div>';
+      hint.className = 'msg warn';
+      // Auto-fill the OTP input
+      const otpInput = document.getElementById(flow === 'signup' ? 'sOTP' : 'fpOTP');
+      if (otpInput) { otpInput.value = data.screenOtp; onOTPInput(flow); }
+    } else {
+      hint.textContent = '✅ OTP sent to your phone via SMS! Valid for 5 minutes.';
+      hint.className = 'msg ok';
+    }
 
     startOTPTimer(flow === 'signup' ? 's' : 'fp');
     otpVerified[flow] = false;

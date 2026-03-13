@@ -107,9 +107,9 @@ function sanitize(m) {
 }
 
 // ════════════════════════════════════════════════════════
-//  OTP — Fast2SMS
-//  Free plan uses route:'v3' (DLT-free variable route)
-//  If that fails, falls back to route:'otp'
+//  OTP — Fast2SMS with screen fallback
+//  If SMS fails for any reason, OTP is shown directly on screen
+//  so members can still login without SMS dependency
 // ════════════════════════════════════════════════════════
 const otpStore = {};
 
@@ -120,71 +120,61 @@ function generateOTP() {
 async function sendSMS(phone, otp) {
   const apiKey = process.env.FAST2SMS_API_KEY;
 
-  // DEV MODE — no API key
+  // No API key — show OTP on screen (dev/fallback mode)
   if (!apiKey || apiKey === 'YOUR_FAST2SMS_API_KEY_HERE') {
-    console.log('\n══════════════════════════════════════');
-    console.log('📱  [DEV MODE] OTP for ' + phone + ' → ' + otp);
-    console.log('    Add FAST2SMS_API_KEY in .env for real SMS');
-    console.log('══════════════════════════════════════\n');
-    return {success:true, devMode:true, otp};
+    console.log('\n══════════════════════════════════');
+    console.log('📱  OTP for ' + phone + ' → ' + otp);
+    console.log('══════════════════════════════════\n');
+    return { success:true, screenMode:true, otp };
   }
 
-  console.log('📤  Sending OTP ' + otp + ' to ' + phone + ' via Fast2SMS...');
+  console.log('📤  Sending OTP to ' + phone + ' via Fast2SMS...');
 
-  // ── Attempt 1: route v3 (works on free Fast2SMS accounts) ──
+  // ── Attempt 1: OTP route ──
   try {
     const resp = await axios.get('https://www.fast2sms.com/dev/bulkV2', {
-      params: {
-        authorization: apiKey,
-        variables_values: otp,
-        route: 'otp',
-        numbers: phone
-      },
-      headers: {'cache-control':'no-cache'},
-      timeout: 15000
+      params: { authorization:apiKey, variables_values:otp, route:'otp', numbers:phone },
+      headers: { 'cache-control':'no-cache' },
+      timeout: 12000
     });
-    console.log('Fast2SMS response:', JSON.stringify(resp.data));
+    console.log('Fast2SMS otp route:', JSON.stringify(resp.data));
     if (resp.data && resp.data.return === true) {
-      console.log('✅  SMS sent successfully to ' + phone);
-      return {success:true};
+      console.log('✅  SMS sent to ' + phone);
+      return { success:true };
     }
-    const errMsg = Array.isArray(resp.data?.message) ? resp.data.message[0] : (resp.data?.message || 'SMS failed');
-    console.log('OTP route failed:', errMsg, '— trying quick route...');
-    return await sendSMSQuickRoute(phone, otp, apiKey);
+    // OTP route failed — try quick route
+    return await sendSMSQuick(phone, otp, apiKey);
   } catch(e) {
     console.error('OTP route error:', e.message);
-    return await sendSMSQuickRoute(phone, otp, apiKey);
+    return await sendSMSQuick(phone, otp, apiKey);
   }
 }
 
-// ── Attempt 2: Quick SMS route (paid but try anyway) ──
-async function sendSMSQuickRoute(phone, otp, apiKey) {
+async function sendSMSQuick(phone, otp, apiKey) {
   try {
     const resp = await axios.post('https://www.fast2sms.com/dev/bulkV2', {
       route: 'q',
-      message: 'Your Brothers Gym OTP is ' + otp + '. Valid for 5 minutes. Do not share.',
+      message: 'Your Brothers Gym OTP is ' + otp + '. Valid 5 mins. Do not share.',
       language: 'english',
       flash: 0,
       numbers: phone
     }, {
-      headers: {
-        'authorization': apiKey,
-        'Content-Type': 'application/json',
-        'cache-control': 'no-cache'
-      },
-      timeout: 15000
+      headers: { 'authorization':apiKey, 'Content-Type':'application/json', 'cache-control':'no-cache' },
+      timeout: 12000
     });
-    console.log('Quick route response:', JSON.stringify(resp.data));
+    console.log('Fast2SMS quick route:', JSON.stringify(resp.data));
     if (resp.data && resp.data.return === true) {
       console.log('✅  SMS sent via quick route to ' + phone);
-      return {success:true};
+      return { success:true };
     }
-    const errMsg = Array.isArray(resp.data?.message) ? resp.data.message[0] : (resp.data?.message || 'Both SMS routes failed');
-    return {success:false, error: errMsg};
+    const err = Array.isArray(resp.data?.message) ? resp.data.message[0] : (resp.data?.message || 'SMS failed');
+    console.log('Quick route failed:', err, '— falling back to screen OTP');
+    // ── FALLBACK: Show OTP on screen so user is never blocked ──
+    return { success:true, screenMode:true, otp, smsError: err };
   } catch(e) {
     console.error('Quick route error:', e.message);
-    if (e.response) console.error('Response:', JSON.stringify(e.response.data));
-    return {success:false, error: 'Fast2SMS unreachable. Check your API key or account balance.'};
+    // ── FALLBACK: SMS failed but show OTP on screen ──
+    return { success:true, screenMode:true, otp, smsError: e.message };
   }
 }
 
@@ -201,12 +191,16 @@ app.post('/api/otp/send', otpLimiter, async (req,res) => {
 
   if (!result.success) {
     delete otpStore[phone];
-    return res.json({success:false, message: result.error || 'SMS failed. Check Fast2SMS API key.'});
+    return res.json({success:false, message: result.error || 'SMS failed. Try again.'});
   }
-  if (result.devMode) {
-    return res.json({success:true, devMode:true, devOtp:otp, message:'[DEV] OTP is: '+otp+' (No API key set)'});
+  // screenMode = SMS failed but OTP shown on screen as fallback
+  if (result.screenMode) {
+    const reason = result.smsError ? ' (SMS failed: ' + result.smsError + ')' : ' (No SMS key set)';
+    console.log('📺  Screen OTP for ' + phone + ': ' + otp + reason);
+    return res.json({success:true, screenMode:true, screenOtp:otp,
+      message:'OTP: ' + otp + ' — SMS unavailable, showing here instead'});
   }
-  res.json({success:true, message:'OTP sent to +91'+phone});
+  res.json({success:true, message:'OTP sent to +91 ' + phone + ' via SMS'});
 });
 
 app.post('/api/otp/verify', (req,res) => {
