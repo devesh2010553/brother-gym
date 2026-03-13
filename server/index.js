@@ -47,15 +47,32 @@ const PLAN_PRICE = {monthly:800, quarterly:2100, annual:7500};
 const PLAN_DAYS  = {monthly:30,  quarterly:90,   annual:365};
 
 async function connectDB() {
-  const uri = process.env.MONGO_URI;
+  let uri = process.env.MONGO_URI;
   if (!uri) {
-    console.error('\n❌  MONGO_URI is not set!');
-    console.error('    Go to Render → Your Service → Environment → Add MONGO_URI');
-    console.error('    Get free URI from https://cloud.mongodb.com\n');
+    console.error('\n❌  MONGO_URI is not set! Add it in Render → Environment.');
     process.exit(1);
   }
-  const client = new MongoClient(uri, {serverSelectionTimeoutMS:10000});
-  await client.connect();
+  // If separate user/pass provided, build URI safely (handles @ in password)
+  const user = process.env.MONGO_USER;
+  const pass = process.env.MONGO_PASS;
+  if (user && pass) {
+    // Encode password so special chars like @ don't break the URI
+    const encodedPass = encodeURIComponent(pass);
+    // Replace placeholder host or inject credentials
+    // URI format: mongodb+srv://HOST/...
+    uri = uri.replace('mongodb+srv://', `mongodb+srv://${encodeURIComponent(user)}:${encodedPass}@`);
+  }
+  // Log masked URI for debugging
+  const maskedUri = uri.replace(/:([^@]+)@/, ':***@');
+  console.log('🔌  Connecting to MongoDB:', maskedUri);
+  const client = new MongoClient(uri, {serverSelectionTimeoutMS:15000});
+  try {
+    await client.connect();
+  } catch(connErr) {
+    console.error('❌  MongoDB connect() failed:', connErr.message);
+    console.error('    URI used (masked):', maskedUri);
+    throw connErr;
+  }
   db = client.db('brothers_gym');
   // indexes
   await db.collection('members').createIndex({phone:1},{unique:true});
@@ -485,19 +502,34 @@ app.get('/health', (req,res) => res.json({status:'healthy'}));
 // ════════════════════════════════════════════════════════
 //  START SERVER
 // ════════════════════════════════════════════════════════
-connectDB().then(() => {
-  app.listen(PORT, '0.0.0.0', () => {
-    console.log('\n🏋️   Brothers Gym server running on port ' + PORT);
-    console.log('📱   Portal:  http://localhost:'+PORT+'/portal');
-    console.log('🌐   Website: http://localhost:'+PORT+'/');
-    const key = process.env.FAST2SMS_API_KEY;
-    if (!key || key === 'YOUR_FAST2SMS_API_KEY_HERE') {
-      console.log('\n⚠️   DEV MODE — No FAST2SMS_API_KEY set. OTPs will print here.\n');
-    } else {
-      console.log('\n✅   Fast2SMS configured — Real OTPs will be sent!\n');
-    }
-  });
-}).catch(err => {
-  console.error('\n❌  Startup failed:', err.message);
-  process.exit(1);
+//  START HTTP FIRST — then connect DB
+//  This way Render sees the server is up and we get full logs
+// ════════════════════════════════════════════════════════
+app.listen(PORT, '0.0.0.0', () => {
+  console.log('\n🏋️   Brothers Gym HTTP server started on port ' + PORT);
+
+  // Print all env vars so we can debug in Render logs
+  console.log('\n🔍  Environment check:');
+  console.log('    MONGO_URI  :', process.env.MONGO_URI
+    ? '✅ "' + process.env.MONGO_URI.substring(0, 40) + '..."'
+    : '❌ NOT SET');
+  console.log('    MONGO_USER :', process.env.MONGO_USER || '❌ NOT SET');
+  console.log('    MONGO_PASS :', process.env.MONGO_PASS
+    ? '✅ set (length ' + process.env.MONGO_PASS.length + ')'
+    : '❌ NOT SET');
+  console.log('    ADMIN_PASS :', process.env.ADMIN_PASSWORD ? '✅ set' : '⚠️  using default admin123');
+  console.log('    FAST2SMS   :', process.env.FAST2SMS_API_KEY ? '✅ set' : '⚠️  DEV MODE');
+
+  // Now connect to MongoDB
+  connectDB()
+    .then(() => {
+      console.log('\n🎉  All systems go! Server + Database both running.\n');
+    })
+    .catch(err => {
+      console.error('\n❌  MongoDB failed to connect!');
+      console.error('    Name   :', err.name);
+      console.error('    Message:', err.message);
+      console.error('    Fix: Check MONGO_URI, MONGO_USER, MONGO_PASS in Render Environment\n');
+      // Keep HTTP server alive — API routes will return errors gracefully
+    });
 });
