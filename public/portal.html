@@ -13,34 +13,36 @@
 <link rel="apple-touch-icon" href="/icon-192.png">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <style>
-:root{--p:#ff3c00;--pd:rgba(255,60,0,0.12);--bg:#090b0f;--sf:rgba(255,255,255,0.04);--sf2:rgba(255,255,255,0.07);--br:rgba(255,255,255,0.08);--tx:#f0f0f0;--mu:#7a7f8a;--gn:#22c55e;--yw:#eab308;--rd:#ef4444;--bl:#3b82f6;--fd:'Barlow Condensed',sans-serif;--fb:'Barlow',sans-serif;}
+:root{--p:#ff3c00;--pd:rgba(255,60,0,0.12);--bg:#090b0f;--sf:rgba(255,255,255,0.04);--sf2:rgba(255,255,255,0.08);--br:rgba(255,255,255,0.08);--tx:#f0f0f0;--mu:#7a7f8a;--gn:#22c55e;--yw:#eab308;--rd:#ef4444;--bl:#3b82f6;--fd:'Barlow Condensed',sans-serif;--fb:'Barlow',sans-serif;--sb-width:230px;}
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
 html{scroll-behavior:smooth;}
 body{background:var(--bg);color:var(--tx);font-family:var(--fb);overflow-x:hidden;min-height:100vh;}
 canvas#bg3d{position:fixed;top:0;left:0;z-index:0;pointer-events:none;}
+
+/* ── VIEWS ── */
 .view{display:none;position:relative;z-index:1;min-height:100vh;}
 .view.active{display:flex;}
-
-/* AUTH */
 #authView{align-items:center;justify-content:center;padding:20px;}
-.auth-box{background:rgba(12,14,20,0.97);border:1px solid var(--br);border-radius:20px;padding:40px;width:100%;max-width:420px;backdrop-filter:blur(20px);}
-.auth-logo{font-family:var(--fd);font-size:28px;font-weight:900;color:var(--p);text-align:center;letter-spacing:1px;text-transform:uppercase;}
+
+/* ── AUTH ── */
+.auth-box{background:rgba(12,14,20,0.97);border:1px solid var(--br);border-radius:20px;padding:36px;width:100%;max-width:400px;backdrop-filter:blur(20px);}
+.auth-logo{font-family:var(--fd);font-size:26px;font-weight:900;color:var(--p);text-align:center;letter-spacing:1px;text-transform:uppercase;}
 .auth-logo small{display:block;font-family:var(--fb);font-size:11px;font-weight:400;color:var(--mu);letter-spacing:3px;text-transform:uppercase;margin-top:2px;}
-.auth-tabs{display:flex;margin:22px 0 26px;border:1px solid var(--br);border-radius:10px;overflow:hidden;}
+.auth-tabs{display:flex;margin:20px 0 24px;border:1px solid var(--br);border-radius:10px;overflow:hidden;}
 .auth-tab{flex:1;background:none;border:none;color:var(--mu);font-family:var(--fb);font-size:14px;font-weight:600;padding:11px;cursor:pointer;transition:.2s;}
 .auth-tab.active{background:var(--p);color:white;}
-.fg{margin-bottom:15px;}
+.fg{margin-bottom:14px;}
 .fg label{display:block;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--mu);margin-bottom:7px;}
-.fg input,.fg select,.fg textarea{width:100%;background:rgba(255,255,255,.05);border:1px solid var(--br);border-radius:8px;color:var(--tx);font-family:var(--fb);font-size:15px;padding:12px 14px;outline:none;transition:border-color .2s;}
+.fg input,.fg select,.fg textarea{width:100%;background:rgba(255,255,255,.05);border:1px solid var(--br);border-radius:8px;color:var(--tx);font-family:var(--fb);font-size:15px;padding:12px 14px;outline:none;transition:border-color .2s;-webkit-appearance:none;}
 .fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--p);}
 .fg input::placeholder{color:var(--mu);}
 .fg select option{background:#1a1d24;}
 .fg textarea{resize:vertical;min-height:90px;}
 .otp-row{display:flex;gap:8px;}
 .otp-row input{flex:1;text-align:center;font-size:22px;font-weight:700;letter-spacing:6px;}
-.otp-btn{background:var(--p);color:white;border:none;border-radius:8px;padding:0 16px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;transition:.2s;min-width:90px;min-height:48px;}
+.otp-btn{background:var(--p);color:white;border:none;border-radius:8px;padding:0 14px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;transition:.2s;min-width:84px;min-height:48px;}
 .otp-btn:disabled{background:#444;cursor:not-allowed;}
-.btn{width:100%;background:var(--p);color:white;border:none;border-radius:8px;font-family:var(--fd);font-size:18px;font-weight:800;letter-spacing:1px;text-transform:uppercase;padding:14px;cursor:pointer;transition:.2s;margin-top:6px;}
+.btn{width:100%;background:var(--p);color:white;border:none;border-radius:8px;font-family:var(--fd);font-size:17px;font-weight:800;letter-spacing:1px;text-transform:uppercase;padding:14px;cursor:pointer;transition:.2s;margin-top:6px;}
 .btn:hover:not(:disabled){background:#e03500;transform:translateY(-2px);}
 .btn:disabled{background:#444;cursor:not-allowed;}
 .btn-ol{background:none;border:1px solid var(--br);color:var(--tx);}
@@ -49,68 +51,93 @@ canvas#bg3d{position:fixed;top:0;left:0;z-index:0;pointer-events:none;}
 .msg.ok{background:rgba(34,197,94,.15);border:1px solid rgba(34,197,94,.3);color:var(--gn);}
 .msg.err{background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);color:var(--rd);}
 .msg.info{background:var(--pd);border:1px solid rgba(255,60,0,.3);color:var(--p);}
-.msg.warn{background:rgba(234,179,8,.12);border:1px solid rgba(234,179,8,.3);color:var(--yw);}
-.divider{display:flex;align-items:center;gap:12px;margin:18px 0;color:var(--mu);font-size:12px;}
+.divider{display:flex;align-items:center;gap:12px;margin:16px 0;color:var(--mu);font-size:12px;}
 .divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--br);}
 .link{color:var(--p);cursor:pointer;text-decoration:none;}
 .link:hover{text-decoration:underline;}
 .hint{text-align:center;font-size:13px;color:var(--mu);margin-top:12px;}
-
-/* OTP CODE BOX */
-.otp-display{background:rgba(255,60,0,.07);border:1px solid rgba(255,60,0,.25);border-radius:14px;padding:18px;text-align:center;margin-top:10px;}
-.otp-display-label{font-size:10px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;color:var(--mu);margin-bottom:12px;}
-.otp-digits{display:flex;justify-content:center;gap:8px;margin-bottom:10px;}
-.otp-digit{width:42px;height:54px;background:rgba(255,255,255,.08);border:2px solid var(--p);border-radius:10px;display:flex;align-items:center;justify-content:center;font-family:var(--fd);font-size:28px;font-weight:900;color:var(--tx);}
+.otp-display{background:rgba(255,60,0,.07);border:1px solid rgba(255,60,0,.25);border-radius:12px;padding:16px;text-align:center;margin-top:10px;}
+.otp-display-label{font-size:10px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;color:var(--mu);margin-bottom:10px;}
+.otp-digits{display:flex;justify-content:center;gap:7px;margin-bottom:8px;}
+.otp-digit{width:40px;height:50px;background:rgba(255,255,255,.08);border:2px solid var(--p);border-radius:9px;display:flex;align-items:center;justify-content:center;font-family:var(--fd);font-size:26px;font-weight:900;color:var(--tx);}
 .otp-display-note{font-size:12px;color:var(--mu);}
 
-/* LAYOUT */
+/* ── LAYOUT ── */
 #adminView,#memberView{flex-direction:row;}
-.sidebar{width:240px;min-height:100vh;background:rgba(9,11,15,.98);border-right:1px solid var(--br);display:flex;flex-direction:column;padding:20px 0;position:fixed;top:0;left:0;z-index:600;transition:transform .3s;}
-.slogo{font-family:var(--fd);font-size:19px;font-weight:900;color:var(--p);padding:0 20px 18px;border-bottom:1px solid var(--br);margin-bottom:10px;letter-spacing:1px;text-transform:uppercase;line-height:1.2;}
+
+/* SIDEBAR */
+.sidebar{
+  width:var(--sb-width);
+  min-height:100vh;
+  background:rgba(9,11,15,0.99);
+  border-right:1px solid var(--br);
+  display:flex;
+  flex-direction:column;
+  padding:0;
+  position:fixed;
+  top:0;left:0;
+  z-index:600;
+  transition:transform .3s ease;
+  overflow-y:auto;
+}
+.slogo{font-family:var(--fd);font-size:17px;font-weight:900;color:var(--p);padding:18px 18px 16px;border-bottom:1px solid var(--br);letter-spacing:1px;text-transform:uppercase;line-height:1.2;}
 .slogo small{display:block;font-family:var(--fb);font-size:10px;font-weight:400;color:var(--mu);letter-spacing:2px;}
-.ni{display:flex;align-items:center;gap:11px;padding:12px 20px;color:var(--mu);font-size:14px;font-weight:500;cursor:pointer;transition:.2s;border-left:3px solid transparent;min-height:44px;user-select:none;}
-.ni:hover{color:var(--tx);background:var(--sf);}
+.sidebar-nav{flex:1;padding:8px 0;}
+.ni{
+  display:flex;align-items:center;gap:10px;
+  padding:13px 18px;
+  color:var(--mu);font-size:14px;font-weight:500;
+  cursor:pointer;transition:.2s;
+  border-left:3px solid transparent;
+  min-height:46px;
+  user-select:none;
+  -webkit-tap-highlight-color:transparent;
+}
+.ni:hover{color:var(--tx);background:var(--sf2);}
 .ni.on{color:var(--p);background:var(--pd);border-left-color:var(--p);}
-.ni .ico{font-size:17px;width:22px;text-align:center;flex-shrink:0;}
-.nbadge{margin-left:auto;background:var(--p);color:white;font-size:10px;font-weight:700;padding:2px 7px;border-radius:100px;}
-.sfooter{margin-top:auto;padding:14px 20px;border-top:1px solid var(--br);}
-.suser{font-size:13px;color:var(--mu);margin-bottom:10px;}
+.ni .ico{font-size:16px;width:20px;text-align:center;flex-shrink:0;}
+.nbadge{margin-left:auto;background:var(--p);color:white;font-size:10px;font-weight:700;padding:2px 6px;border-radius:100px;min-width:18px;text-align:center;}
+.sfooter{padding:14px 18px;border-top:1px solid var(--br);flex-shrink:0;}
+.suser{font-size:12px;color:var(--mu);margin-bottom:10px;}
 .suser strong{display:block;color:var(--tx);font-size:14px;}
 .lout{background:none;border:1px solid var(--br);color:var(--mu);font-family:var(--fb);font-size:13px;padding:10px;border-radius:6px;cursor:pointer;width:100%;transition:.2s;}
 .lout:hover{border-color:var(--rd);color:var(--rd);}
-.main{margin-left:240px;flex:1;padding:28px 30px;min-height:100vh;}
+
+/* MAIN CONTENT */
+.main{margin-left:var(--sb-width);flex:1;padding:26px 28px;min-height:100vh;min-width:0;}
 .page{display:none;}.page.on{display:block;}
-.ptitle{font-family:var(--fd);font-size:36px;font-weight:900;text-transform:uppercase;letter-spacing:-.5px;margin-bottom:4px;}
-.psub{color:var(--mu);font-size:14px;margin-bottom:24px;}
+.ptitle{font-family:var(--fd);font-size:34px;font-weight:900;text-transform:uppercase;letter-spacing:-.5px;margin-bottom:4px;}
+.psub{color:var(--mu);font-size:14px;margin-bottom:22px;}
 
 /* STATS */
-.srow{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px;}
-.sc{background:var(--sf);border:1px solid var(--br);border-radius:14px;padding:18px 20px;transition:.3s;}
+.srow{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:22px;}
+.sc{background:var(--sf);border:1px solid var(--br);border-radius:12px;padding:16px 18px;transition:.3s;}
 .sc:hover{border-color:rgba(255,60,0,.3);transform:translateY(-3px);}
-.sc .ico2{font-size:26px;margin-bottom:8px;}
-.sc .val{font-family:var(--fd);font-size:34px;font-weight:900;line-height:1;}
+.sc .ico2{font-size:24px;margin-bottom:7px;}
+.sc .val{font-family:var(--fd);font-size:30px;font-weight:900;line-height:1;}
 .sc .lbl{font-size:11px;color:var(--mu);letter-spacing:1px;text-transform:uppercase;margin-top:3px;}
 .sc.gn .val{color:var(--gn);}.sc.yw .val{color:var(--yw);}.sc.rd .val{color:var(--rd);}.sc.or .val{color:var(--p);}
 
 /* CARD / TABLE */
-.card{background:var(--sf);border:1px solid var(--br);border-radius:14px;overflow:hidden;margin-bottom:22px;}
+.card{background:var(--sf);border:1px solid var(--br);border-radius:12px;overflow:hidden;margin-bottom:20px;}
 .card-scroll{overflow-x:auto;}
-.ch{display:flex;align-items:center;justify-content:space-between;padding:15px 20px;border-bottom:1px solid var(--br);flex-wrap:wrap;gap:10px;}
-.ct{font-family:var(--fd);font-size:19px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;}
-.ca{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
-.sb{background:var(--p);color:white;border:none;border-radius:7px;font-family:var(--fd);font-size:13px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;padding:9px 16px;cursor:pointer;transition:.2s;white-space:nowrap;min-height:38px;}
+.ch{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--br);flex-wrap:wrap;gap:10px;}
+.ct{font-family:var(--fd);font-size:17px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;}
+.ca{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+.sb{background:var(--p);color:white;border:none;border-radius:6px;font-family:var(--fd);font-size:13px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;padding:8px 14px;cursor:pointer;transition:.2s;white-space:nowrap;min-height:36px;}
 .sb:hover{background:#e03500;}
 .sb.gn{background:var(--gn);}.sb.gn:hover{background:#16a34a;}
 .sb.ol{background:none;border:1px solid var(--br);color:var(--tx);}.sb.ol:hover{border-color:var(--p);color:var(--p);}
 .sb.yw{background:var(--yw);color:#000;}.sb.yw:hover{background:#ca9f04;}
-.srch{background:rgba(255,255,255,.05);border:1px solid var(--br);border-radius:7px;color:var(--tx);font-family:var(--fb);font-size:13px;padding:9px 14px;outline:none;width:210px;min-height:38px;}
+.sb.rd{background:var(--rd);}.sb.rd:hover{background:#dc2626;}
+.srch{background:rgba(255,255,255,.05);border:1px solid var(--br);border-radius:6px;color:var(--tx);font-family:var(--fb);font-size:13px;padding:8px 12px;outline:none;width:190px;min-height:36px;}
 .srch:focus{border-color:var(--p);}
 table{width:100%;border-collapse:collapse;}
-th{font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--mu);padding:11px 18px;text-align:left;border-bottom:1px solid var(--br);white-space:nowrap;}
-td{padding:12px 18px;font-size:14px;border-bottom:1px solid rgba(255,255,255,.04);vertical-align:middle;}
+th{font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--mu);padding:10px 16px;text-align:left;border-bottom:1px solid var(--br);white-space:nowrap;}
+td{padding:11px 16px;font-size:13px;border-bottom:1px solid rgba(255,255,255,.04);vertical-align:middle;}
 tr:last-child td{border-bottom:none;}
 tr:hover td{background:rgba(255,255,255,.02);}
-.badge{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;padding:3px 9px;border-radius:100px;}
+.badge{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;padding:3px 8px;border-radius:100px;}
 .badge.active{background:rgba(34,197,94,.15);color:var(--gn);}
 .badge.expiring{background:rgba(234,179,8,.15);color:var(--yw);}
 .badge.expired{background:rgba(239,68,68,.15);color:var(--rd);}
@@ -118,178 +145,191 @@ tr:hover td{background:rgba(255,255,255,.02);}
 .badge.pending{background:rgba(234,179,8,.15);color:var(--yw);}
 .badge.no-plan{background:rgba(122,127,138,.15);color:var(--mu);}
 .badge.pending-payment{background:rgba(234,179,8,.15);color:var(--yw);}
-.abtn{display:flex;gap:6px;flex-wrap:wrap;}
-.ib{background:var(--sf2);border:none;color:var(--mu);font-size:13px;padding:7px 11px;border-radius:6px;cursor:pointer;transition:.2s;min-height:34px;white-space:nowrap;}
-.ib:hover{background:var(--pd);color:var(--p);}
-.ib.del:hover{background:rgba(239,68,68,.15);color:var(--rd);}
-.ib.grn:hover{background:rgba(34,197,94,.15);color:var(--gn);}
+.abtn{display:flex;gap:5px;flex-wrap:wrap;}
+.ib{background:var(--sf2);border:1px solid rgba(255,255,255,.06);color:var(--mu);font-size:13px;padding:7px 11px;border-radius:6px;cursor:pointer;transition:.2s;min-height:32px;white-space:nowrap;font-family:var(--fb);}
+.ib:hover{background:var(--pd);color:var(--p);border-color:rgba(255,60,0,.2);}
+.ib.del:hover{background:rgba(239,68,68,.15);color:var(--rd);border-color:rgba(239,68,68,.2);}
+.ib.grn:hover{background:rgba(34,197,94,.15);color:var(--gn);border-color:rgba(34,197,94,.2);}
 
 /* MODAL */
-.mbg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);backdrop-filter:blur(8px);z-index:1000;align-items:center;justify-content:center;padding:20px;}
+.mbg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.9);backdrop-filter:blur(8px);z-index:2000;align-items:center;justify-content:center;padding:16px;}
 .mbg.open{display:flex;}
-.modal{background:#0e1118;border:1px solid var(--br);border-radius:18px;padding:30px;width:100%;max-width:500px;max-height:90vh;overflow-y:auto;}
-.mtitle{font-family:var(--fd);font-size:24px;font-weight:900;text-transform:uppercase;margin-bottom:20px;}
-.mrow{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
-.mfoot{display:flex;gap:10px;margin-top:18px;}
+.modal{background:#0e1118;border:1px solid var(--br);border-radius:16px;padding:26px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto;}
+.mtitle{font-family:var(--fd);font-size:22px;font-weight:900;text-transform:uppercase;margin-bottom:18px;}
+.mrow{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.mfoot{display:flex;gap:10px;margin-top:16px;}
 .mfoot button{flex:1;}
 .xbtn{float:right;background:none;border:none;color:var(--mu);font-size:22px;cursor:pointer;line-height:1;transition:.2s;padding:0 0 0 10px;}
 .xbtn:hover{color:var(--rd);}
 
 /* NOTIFICATIONS */
-.nit{display:flex;gap:12px;padding:14px 18px;border-bottom:1px solid rgba(255,255,255,.04);transition:.2s;cursor:pointer;}
+.nit{display:flex;gap:10px;padding:13px 16px;border-bottom:1px solid rgba(255,255,255,.04);transition:.2s;cursor:pointer;}
 .nit:hover{background:var(--sf2);}
 .nit:last-child{border-bottom:none;}
 .nit.unread{background:var(--pd);}
-.nico{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
-.nico.warn{background:rgba(234,179,8,.15);}
+.nico{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;}
+.nico.warn,.nico.expiry{background:rgba(234,179,8,.15);}
 .nico.danger{background:rgba(239,68,68,.15);}
 .nico.success,.nico.ok{background:rgba(34,197,94,.15);}
 .nico.info{background:var(--pd);}
-.nico.expiry{background:rgba(234,179,8,.15);}
 .nbody{flex:1;min-width:0;}
 .ntitle{font-size:14px;font-weight:600;margin-bottom:2px;}
-.ndesc{font-size:13px;color:var(--mu);word-break:break-word;}
-.ntime{font-size:11px;color:var(--mu);margin-top:2px;}
+.ndesc{font-size:13px;color:var(--mu);word-break:break-word;line-height:1.5;}
+.ntime{font-size:11px;color:var(--mu);margin-top:3px;}
 
 /* LIVE */
-.lscreen{position:relative;background:#0a0c10;border:1px solid var(--br);border-radius:14px;overflow:hidden;aspect-ratio:16/9;display:flex;align-items:center;justify-content:center;}
-.lph{text-align:center;padding:40px;display:flex;flex-direction:column;align-items:center;gap:11px;}
-.lph h3{font-family:var(--fd);font-size:26px;font-weight:900;text-transform:uppercase;}
-.lph p{color:var(--mu);font-size:14px;line-height:1.6;max-width:300px;}
-.ldot{width:9px;height:9px;background:var(--p);border-radius:50%;animation:blk 1s ease infinite;}
+.lscreen{position:relative;background:#0a0c10;border:1px solid var(--br);border-radius:12px;overflow:hidden;aspect-ratio:16/9;display:flex;align-items:center;justify-content:center;}
+.lph{text-align:center;padding:36px;display:flex;flex-direction:column;align-items:center;gap:10px;}
+.lph h3{font-family:var(--fd);font-size:24px;font-weight:900;text-transform:uppercase;}
+.lph p{color:var(--mu);font-size:13px;line-height:1.6;max-width:280px;}
+.ldot{width:8px;height:8px;background:var(--p);border-radius:50%;animation:blk 1s ease infinite;}
 @keyframes blk{0%,100%{opacity:1}50%{opacity:.2}}
 
-/* MEMBER CARDS */
-.mprofile{background:linear-gradient(135deg,rgba(255,60,0,.12),rgba(255,60,0,.04));border:1px solid rgba(255,60,0,.25);border-radius:16px;padding:26px;margin-bottom:22px;display:flex;align-items:center;gap:22px;}
-.mavatar{width:68px;height:68px;border-radius:50%;background:var(--p);display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:900;font-family:var(--fd);color:white;flex-shrink:0;}
-.mname{font-family:var(--fd);font-size:30px;font-weight:900;text-transform:uppercase;letter-spacing:-.5px;}
-.mpill{display:inline-block;background:var(--pd);color:var(--p);font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;padding:3px 11px;border-radius:100px;border:1px solid rgba(255,60,0,.2);}
-.memprog{background:var(--sf);border:1px solid var(--br);border-radius:14px;padding:22px;margin-bottom:22px;}
-.pbar{height:8px;background:rgba(255,255,255,.08);border-radius:100px;overflow:hidden;}
+/* MEMBER PROFILE */
+.mprofile{background:linear-gradient(135deg,rgba(255,60,0,.1),rgba(255,60,0,.04));border:1px solid rgba(255,60,0,.2);border-radius:14px;padding:22px;margin-bottom:18px;display:flex;align-items:center;gap:18px;}
+.mavatar{width:62px;height:62px;border-radius:50%;background:var(--p);display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:900;font-family:var(--fd);color:white;flex-shrink:0;}
+.mname{font-family:var(--fd);font-size:28px;font-weight:900;text-transform:uppercase;letter-spacing:-.5px;}
+.mpill{display:inline-block;background:var(--pd);color:var(--p);font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;padding:3px 10px;border-radius:100px;border:1px solid rgba(255,60,0,.2);}
+.memprog{background:var(--sf);border:1px solid var(--br);border-radius:12px;padding:20px;margin-bottom:18px;}
+.pbar{height:7px;background:rgba(255,255,255,.07);border-radius:100px;overflow:hidden;}
 .pfill{height:100%;background:linear-gradient(90deg,var(--p),#ff7300);border-radius:100px;transition:width .6s ease;}
 .pfill.warn{background:linear-gradient(90deg,var(--yw),#f59e0b);}
 .pfill.danger{background:linear-gradient(90deg,var(--rd),#dc2626);}
-.dleft{font-family:var(--fd);font-size:40px;font-weight:900;color:var(--p);line-height:1;}
+.dleft{font-family:var(--fd);font-size:38px;font-weight:900;color:var(--p);line-height:1;}
 .dleft.warn{color:var(--yw);}.dleft.danger{color:var(--rd);}
-.payrow{display:flex;align-items:center;justify-content:space-between;padding:13px 18px;border-bottom:1px solid rgba(255,255,255,.04);}
+.payrow{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid rgba(255,255,255,.04);}
 .payrow:last-child{border-bottom:none;}
-.payico{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:15px;background:rgba(34,197,94,.12);flex-shrink:0;}
+.payico{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;background:rgba(34,197,94,.1);flex-shrink:0;}
 .payamt{font-family:var(--fd);font-size:20px;font-weight:900;color:var(--gn);}
 
 /* PLAN CARDS */
-.plan-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px;}
-.plan-card{background:var(--sf);border:2px solid var(--br);border-radius:16px;padding:24px;text-align:center;cursor:pointer;transition:.3s;position:relative;overflow:hidden;}
+.plan-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px;}
+.plan-card{background:var(--sf);border:2px solid var(--br);border-radius:14px;padding:22px;text-align:center;cursor:pointer;transition:.3s;position:relative;overflow:hidden;}
 .plan-card:hover{border-color:rgba(255,60,0,.4);transform:translateY(-4px);}
-.plan-card.featured{border-color:var(--p);background:rgba(255,60,0,.06);}
-.plan-card .plan-name{font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--mu);margin-bottom:12px;}
-.plan-card .plan-price{font-family:var(--fd);font-size:44px;font-weight:900;color:var(--tx);line-height:1;}
-.plan-card .plan-price sup{font-size:20px;vertical-align:top;margin-top:8px;display:inline-block;}
-.plan-card .plan-period{font-size:13px;color:var(--mu);margin:6px 0 18px;}
-.plan-card ul{list-style:none;margin-bottom:20px;text-align:left;}
-.plan-card ul li{font-size:13px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.05);display:flex;gap:8px;align-items:center;}
+.plan-card.featured{border-color:var(--p);background:rgba(255,60,0,.05);}
+.plan-card .plan-name{font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--mu);margin-bottom:10px;}
+.plan-card .plan-price{font-family:var(--fd);font-size:40px;font-weight:900;color:var(--tx);line-height:1;}
+.plan-card .plan-price sup{font-size:18px;vertical-align:top;margin-top:7px;display:inline-block;}
+.plan-card .plan-period{font-size:12px;color:var(--mu);margin:5px 0 14px;}
+.plan-card ul{list-style:none;margin-bottom:16px;text-align:left;}
+.plan-card ul li{font-size:12px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.05);display:flex;gap:7px;align-items:center;}
 .plan-card ul li:last-child{border-bottom:none;}
 .plan-card ul li .ck{color:var(--gn);}
-.plan-select-btn{width:100%;background:var(--p);color:white;border:none;border-radius:8px;font-family:var(--fd);font-size:16px;font-weight:800;padding:12px;cursor:pointer;transition:.2s;text-transform:uppercase;}
+.plan-select-btn{width:100%;background:var(--p);color:white;border:none;border-radius:7px;font-family:var(--fd);font-size:15px;font-weight:800;padding:11px;cursor:pointer;transition:.2s;text-transform:uppercase;}
 .plan-select-btn:hover{background:#e03500;}
 
-/* PENDING PAYMENT BOX */
-.pending-box{background:rgba(234,179,8,.08);border:1px solid rgba(234,179,8,.3);border-radius:14px;padding:24px;text-align:center;margin-bottom:22px;}
-.pending-box h3{font-family:var(--fd);font-size:22px;font-weight:900;text-transform:uppercase;color:var(--yw);margin-bottom:8px;}
-.pending-box p{font-size:14px;color:var(--mu);line-height:1.6;margin-bottom:16px;}
+/* PENDING BOX */
+.pending-box{background:rgba(234,179,8,.07);border:1px solid rgba(234,179,8,.25);border-radius:12px;padding:20px;text-align:center;margin-bottom:18px;}
+.pending-box h3{font-family:var(--fd);font-size:20px;font-weight:900;text-transform:uppercase;color:var(--yw);margin-bottom:7px;}
+.pending-box p{font-size:13px;color:var(--mu);line-height:1.6;margin-bottom:14px;}
 
 /* ANNOUNCEMENTS */
-.ann-card{padding:16px 18px;border-bottom:1px solid rgba(255,255,255,.05);transition:.2s;}
+.ann-card{padding:14px 16px;border-bottom:1px solid rgba(255,255,255,.05);transition:.2s;}
 .ann-card:last-child{border-bottom:none;}
 .ann-card:hover{background:var(--sf2);}
-.ann-title-row{font-size:15px;font-weight:700;margin-bottom:5px;display:flex;align-items:flex-start;gap:8px;}
-.ann-body{font-size:14px;color:var(--mu);line-height:1.6;margin-bottom:6px;}
+.ann-title-row{font-size:14px;font-weight:700;margin-bottom:5px;display:flex;align-items:flex-start;gap:8px;}
+.ann-body{font-size:13px;color:var(--mu);line-height:1.6;margin-bottom:5px;}
 .ann-time{font-size:11px;color:var(--mu);}
 
 /* FLOAT NOTIF */
-.fn-wrap{position:fixed;top:18px;right:18px;z-index:9000;display:flex;flex-direction:column;gap:9px;pointer-events:none;}
-.fn{background:#0f1219;border-left:4px solid var(--p);border-radius:10px;padding:13px 17px;min-width:280px;max-width:340px;box-shadow:0 10px 40px rgba(0,0,0,.5);transform:translateX(400px);transition:transform .4s ease;pointer-events:all;}
+.fn-wrap{position:fixed;top:16px;right:16px;z-index:9000;display:flex;flex-direction:column;gap:8px;pointer-events:none;}
+.fn{background:#0f1219;border-left:4px solid var(--p);border-radius:10px;padding:12px 16px;min-width:270px;max-width:320px;box-shadow:0 10px 40px rgba(0,0,0,.6);transform:translateX(400px);transition:transform .4s ease;pointer-events:all;}
 .fn.show{transform:translateX(0);}
 .fn.warn{border-color:var(--yw);}.fn.danger{border-color:var(--rd);}.fn.ok{border-color:var(--gn);}
 .fntitle{font-size:14px;font-weight:700;margin-bottom:2px;}
 .fndesc{font-size:13px;color:var(--mu);}
 
 /* PWA BANNER */
-.pwa-banner{position:fixed;bottom:0;left:0;right:0;background:#0e1118;border-top:1px solid var(--br);padding:14px 20px;display:flex;align-items:center;gap:14px;z-index:8000;transform:translateY(100%);transition:transform .4s ease;}
+.pwa-banner{position:fixed;bottom:0;left:0;right:0;background:#0e1118;border-top:1px solid var(--br);padding:12px 16px;display:flex;align-items:center;gap:12px;z-index:8000;transform:translateY(100%);transition:transform .4s ease;}
 .pwa-banner.show{transform:translateY(0);}
-.pwa-install-btn{background:var(--p);color:white;border:none;border-radius:8px;font-family:var(--fd);font-size:14px;font-weight:800;text-transform:uppercase;padding:10px 18px;cursor:pointer;white-space:nowrap;}
-.pwa-dismiss{background:none;border:none;color:var(--mu);font-size:22px;cursor:pointer;padding:6px;margin-left:auto;}
+.pwa-install-btn{background:var(--p);color:white;border:none;border-radius:7px;font-family:var(--fd);font-size:13px;font-weight:800;text-transform:uppercase;padding:9px 16px;cursor:pointer;white-space:nowrap;}
+.pwa-dismiss{background:none;border:none;color:var(--mu);font-size:22px;cursor:pointer;padding:4px;margin-left:auto;}
 
 /* PUSH BELL */
-.push-bell{position:fixed;bottom:76px;right:18px;z-index:7000;width:48px;height:48px;border-radius:50%;background:var(--p);border:none;color:white;font-size:20px;cursor:pointer;box-shadow:0 4px 20px rgba(255,60,0,.4);display:none;align-items:center;justify-content:center;transition:.2s;}
+.push-bell{position:fixed;bottom:70px;right:14px;z-index:7000;width:46px;height:46px;border-radius:50%;background:var(--p);border:none;color:white;font-size:18px;cursor:pointer;box-shadow:0 4px 20px rgba(255,60,0,.4);display:none;align-items:center;justify-content:center;transition:.2s;}
 .push-bell:hover{transform:scale(1.1);}
-.push-bell.active{background:#1a3a1a;box-shadow:0 4px 20px rgba(34,197,94,.3);}
+.push-bell.active{background:#14532d;box-shadow:0 4px 20px rgba(34,197,94,.3);}
 
-/* LIVE ADMIN GRID */
-.live-admin-grid{display:grid;grid-template-columns:1fr 320px;gap:16px;}
-@media(max-width:900px){.live-admin-grid{grid-template-columns:1fr;}}
-.plat-btn{background:rgba(255,255,255,.05);border:1px solid var(--br);color:var(--mu);font-family:var(--fb);font-size:13px;font-weight:600;padding:10px 8px;border-radius:8px;cursor:pointer;transition:.2s;text-align:center;}
+/* LIVE ADMIN */
+.live-admin-grid{display:grid;grid-template-columns:1fr 300px;gap:14px;}
+.plat-btn{background:rgba(255,255,255,.04);border:1px solid var(--br);color:var(--mu);font-family:var(--fb);font-size:13px;font-weight:600;padding:9px 7px;border-radius:7px;cursor:pointer;transition:.2s;text-align:center;}
 .plat-btn:hover{border-color:var(--p);color:var(--tx);}
 .plat-btn.active-plat{background:var(--pd);border-color:var(--p);color:var(--p);}
 
 /* MISC */
-::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar{width:3px;}
 ::-webkit-scrollbar-track{background:var(--bg);}
 ::-webkit-scrollbar-thumb{background:#333;border-radius:4px;}
 ::-webkit-scrollbar-thumb:hover{background:var(--p);}
-.loading{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:white;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px;}
+.loading{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:white;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:5px;}
 @keyframes spin{to{transform:rotate(360deg)}}
-.empty{padding:36px;text-align:center;color:var(--mu);font-size:14px;}
+.empty{padding:32px;text-align:center;color:var(--mu);font-size:14px;}
 
-/* RESPONSIVE */
+/* HAMBURGER */
+.hbg{
+  display:none;
+  position:fixed;top:10px;left:10px;z-index:700;
+  background:rgba(9,11,15,.98);
+  border:1px solid rgba(255,60,0,.3);
+  border-radius:9px;
+  padding:9px 11px;
+  cursor:pointer;
+  flex-direction:column;
+  gap:4px;
+  box-shadow:0 4px 20px rgba(0,0,0,.5);
+  -webkit-tap-highlight-color:transparent;
+}
+.hbg span{display:block;width:20px;height:2px;background:var(--tx);border-radius:2px;transition:.3s;}
+.ovlay{display:none;position:fixed;inset:0;z-index:590;background:rgba(0,0,0,.7);}
+.ovlay.show{display:block;}
+
+/* ── RESPONSIVE ── */
 @media(max-width:900px){
-  .sidebar{transform:translateX(-100%);z-index:600;}
+  :root{--sb-width:220px;}
+  .sidebar{transform:translateX(-100%);}
   .sidebar.open{transform:translateX(0);}
-  .main{margin-left:0;padding:64px 14px 20px;}
+  .main{margin-left:0;padding:58px 14px 20px;}
+  .hbg{display:flex;}
   .srow{grid-template-columns:1fr 1fr;}
   .plan-grid{grid-template-columns:1fr;}
   .mrow{grid-template-columns:1fr;}
-  .card{overflow-x:auto;}
-  table{min-width:520px;}
-  .abtn{gap:8px;}
-  .ib{padding:9px 13px;font-size:14px;min-height:40px;}
-  .ni{padding:14px 20px;font-size:15px;min-height:52px;}
-  .sc .val{font-size:28px;}
-  .mprofile{flex-direction:column;align-items:flex-start;gap:14px;}
+  .live-admin-grid{grid-template-columns:1fr;}
+  .card-scroll table{min-width:480px;}
+  .mprofile{flex-direction:column;align-items:flex-start;gap:12px;}
   .dleft{font-size:32px;}
-  .ptitle{font-size:28px;}
-  .fn-wrap{top:auto;bottom:80px;right:10px;left:10px;align-items:stretch;}
+  .ptitle{font-size:26px;}
+  .fn-wrap{top:auto;bottom:76px;right:10px;left:10px;align-items:stretch;}
   .fn{min-width:unset;max-width:unset;transform:translateY(120px);}
   .fn.show{transform:translateY(0);}
-  .push-bell{bottom:20px;right:14px;}
+  .push-bell{bottom:16px;right:12px;}
 }
 @media(max-width:480px){
   .srow{grid-template-columns:1fr;}
-  .main{padding:60px 10px 16px;}
-  .ptitle{font-size:24px;}
-  table{min-width:460px;}
+  .main{padding:56px 10px 16px;}
+  .ptitle{font-size:22px;}
+  .mname{font-size:22px;}
+  .card-scroll table{min-width:440px;}
+  .modal{padding:20px;}
 }
-/* Hamburger */
-.hbg{display:none;position:fixed;top:12px;left:12px;z-index:700;background:rgba(9,11,15,.98);border:1px solid rgba(255,60,0,.3);border-radius:10px;padding:10px 13px;cursor:pointer;flex-direction:column;gap:5px;box-shadow:0 4px 20px rgba(0,0,0,.5);}
-.hbg span{display:block;width:22px;height:2px;background:var(--tx);border-radius:2px;transition:.3s;}
-@media(max-width:900px){.hbg{display:flex;}}
-.ovlay{display:none;position:fixed;inset:0;z-index:590;background:rgba(0,0,0,.7);}
-.ovlay.show{display:block;}
 </style>
 </head>
 <body>
 <canvas id="bg3d"></canvas>
 <div class="fn-wrap" id="fnWrap"></div>
+
+<!-- Hamburger -->
 <div class="hbg" id="hbg" onclick="toggleSb()"><span></span><span></span><span></span></div>
 <div class="ovlay" id="ovlay" onclick="closeSb()"></div>
+
 <div class="pwa-banner" id="pwaBanner">
-  <div style="font-size:36px">💪</div>
-  <div style="flex:1"><strong style="display:block;font-size:15px;color:var(--tx)">Install Brothers Gym App</strong><span style="font-size:13px;color:var(--mu)">Add to home screen for quick access & notifications</span></div>
+  <div style="font-size:32px">💪</div>
+  <div style="flex:1"><strong style="display:block;font-size:14px;color:var(--tx)">Install Brothers Gym App</strong><span style="font-size:12px;color:var(--mu)">Add to home screen for notifications</span></div>
   <button class="pwa-install-btn" onclick="installPWA()">Install</button>
   <button class="pwa-dismiss" onclick="dismissPWA()">✕</button>
 </div>
-<button class="push-bell" id="pushBell" onclick="togglePush()">🔔</button>
+<button class="push-bell" id="pushBell" onclick="togglePush()" title="Toggle notifications">🔕</button>
 
-<!-- ══════════════ AUTH VIEW ══════════════ -->
+<!-- ══ AUTH VIEW ══ -->
 <div class="view active" id="authView">
   <div class="auth-box">
     <div class="auth-logo">The Brothers Gym<small>Member &amp; Admin Portal</small></div>
@@ -300,7 +340,7 @@ tr:hover td{background:rgba(255,255,255,.02);}
 
     <!-- LOGIN -->
     <div id="fLogin">
-      <div class="fg"><label>Phone Number</label><input id="lPhone" type="tel" placeholder="98765 43210" oninput="cleanPhone(this)" inputmode="tel"></div>
+      <div class="fg"><label>Phone Number</label><input id="lPhone" type="tel" placeholder="98765 43210" oninput="cleanPhone(this)" inputmode="numeric"></div>
       <div class="fg"><label>Password</label><input id="lPass" type="password" placeholder="Enter password" onkeydown="if(event.key==='Enter')doLogin()"></div>
       <div id="lMsg" class="msg"></div>
       <button class="btn" id="lBtn" onclick="doLogin()">Login</button>
@@ -310,16 +350,12 @@ tr:hover td{background:rgba(255,255,255,.02);}
     <!-- SIGNUP -->
     <div id="fSignup" style="display:none;">
       <div class="fg"><label>Full Name</label><input id="sName" placeholder="Rahul Kumar"></div>
-      <div class="fg">
-        <label>Phone Number</label>
-        <div class="otp-row">
-          <input id="sPhone" type="tel" placeholder="98765 43210" oninput="cleanPhone(this)" inputmode="tel">
-          <button class="otp-btn" id="sOtpBtn" onclick="sendOTP('signup')">Get OTP</button>
-        </div>
+      <div class="fg"><label>Phone Number</label>
+        <div class="otp-row"><input id="sPhone" type="tel" placeholder="98765 43210" oninput="cleanPhone(this)" inputmode="numeric"><button class="otp-btn" id="sOtpBtn" onclick="sendOTP('signup')">Get OTP</button></div>
       </div>
       <div class="fg" id="sOtpGroup" style="display:none;">
-        <label>Enter code shown below <span id="sOtpTimer" style="color:var(--yw);margin-left:8px;"></span></label>
-        <input id="sOTP" type="text" placeholder="••••••" maxlength="6" style="text-align:center;font-size:26px;font-weight:700;letter-spacing:8px;" oninput="onOTPInput('signup')">
+        <label>Verification Code <span id="sOtpTimer" style="color:var(--yw);margin-left:6px;font-size:11px;"></span></label>
+        <input id="sOTP" type="text" placeholder="••••••" maxlength="6" style="text-align:center;font-size:24px;font-weight:700;letter-spacing:8px;" oninput="onOTPInput('signup')">
       </div>
       <div id="sOtpDisplay" style="display:none;"></div>
       <div id="sPwGroups" style="display:none;">
@@ -332,20 +368,16 @@ tr:hover td{background:rgba(255,255,255,.02);}
 
     <!-- FORGOT -->
     <div id="fForgot" style="display:none;">
-      <div class="fg">
-        <label>Phone Number</label>
-        <div class="otp-row">
-          <input id="fpPhone" type="tel" placeholder="98765 43210" oninput="cleanPhone(this)" inputmode="tel">
-          <button class="otp-btn" id="fpOtpBtn" onclick="sendOTP('forgot')">Get OTP</button>
-        </div>
+      <div class="fg"><label>Phone Number</label>
+        <div class="otp-row"><input id="fpPhone" type="tel" placeholder="98765 43210" oninput="cleanPhone(this)" inputmode="numeric"><button class="otp-btn" id="fpOtpBtn" onclick="sendOTP('forgot')">Get OTP</button></div>
       </div>
       <div class="fg" id="fpOtpGroup" style="display:none;">
-        <label>Enter code shown below <span id="fpOtpTimer" style="color:var(--yw);margin-left:8px;"></span></label>
-        <input id="fpOTP" type="text" placeholder="••••••" maxlength="6" style="text-align:center;font-size:26px;font-weight:700;letter-spacing:8px;" oninput="onOTPInput('forgot')">
+        <label>Verification Code <span id="fpOtpTimer" style="color:var(--yw);margin-left:6px;font-size:11px;"></span></label>
+        <input id="fpOTP" type="text" placeholder="••••••" maxlength="6" style="text-align:center;font-size:24px;font-weight:700;letter-spacing:8px;" oninput="onOTPInput('forgot')">
       </div>
       <div id="fpOtpDisplay" style="display:none;"></div>
       <div id="fpPwGroup" style="display:none;">
-        <div class="fg"><label>New Password</label><input id="fpPw" type="password" placeholder="New password (min 6 chars)" onkeydown="if(event.key==='Enter')doReset()"></div>
+        <div class="fg"><label>New Password</label><input id="fpPw" type="password" placeholder="Min 6 characters" onkeydown="if(event.key==='Enter')doReset()"></div>
       </div>
       <div id="fpMsg" class="msg"></div>
       <button class="btn" id="fpBtn" onclick="doReset()" style="display:none;">Reset Password</button>
@@ -357,18 +389,20 @@ tr:hover td{background:rgba(255,255,255,.02);}
   </div>
 </div>
 
-<!-- ══════════════ ADMIN VIEW ══════════════ -->
+<!-- ══ ADMIN VIEW ══ -->
 <div class="view" id="adminView">
   <div class="sidebar" id="aSb">
     <div class="slogo">Admin Panel<small>Brothers Gym</small></div>
-    <div class="ni on" data-page="dashboard" onclick="aPage('dashboard')"><span class="ico">📊</span>Dashboard</div>
-    <div class="ni" data-page="members"   onclick="aPage('members')"><span class="ico">👥</span>Members<span class="nbadge" id="expBadge" style="display:none">0</span></div>
-    <div class="ni" data-page="pending"   onclick="aPage('pending')"><span class="ico">⏳</span>Pending<span class="nbadge" id="pendBadge" style="display:none">0</span></div>
-    <div class="ni" data-page="addmember" onclick="aPage('addmember')"><span class="ico">➕</span>Add Member</div>
-    <div class="ni" data-page="payments"  onclick="aPage('payments')"><span class="ico">💳</span>Payments</div>
-    <div class="ni" data-page="announce"  onclick="aPage('announce')"><span class="ico">📢</span>Announcements</div>
-    <div class="ni" data-page="notifs"    onclick="aPage('notifs')"><span class="ico">🔔</span>Notifications<span class="nbadge" id="aNBadge" style="display:none">0</span></div>
-    <div class="ni" data-page="live"      onclick="aPage('live')"><span class="ico">🔴</span>Go Live</div>
+    <div class="sidebar-nav">
+      <div class="ni on"  data-page="dashboard" onclick="aPage('dashboard')"><span class="ico">📊</span>Dashboard</div>
+      <div class="ni"     data-page="members"   onclick="aPage('members')"><span class="ico">👥</span>Members<span class="nbadge" id="expBadge" style="display:none">0</span></div>
+      <div class="ni"     data-page="pending"   onclick="aPage('pending')"><span class="ico">⏳</span>Pending<span class="nbadge" id="pendBadge" style="display:none">0</span></div>
+      <div class="ni"     data-page="addmember" onclick="aPage('addmember')"><span class="ico">➕</span>Add Member</div>
+      <div class="ni"     data-page="payments"  onclick="aPage('payments')"><span class="ico">💳</span>Payments</div>
+      <div class="ni"     data-page="announce"  onclick="aPage('announce')"><span class="ico">📢</span>Announce</div>
+      <div class="ni"     data-page="notifs"    onclick="aPage('notifs')"><span class="ico">🔔</span>Notifications<span class="nbadge" id="aNBadge" style="display:none">0</span></div>
+      <div class="ni"     data-page="live"      onclick="aPage('live')"><span class="ico">🔴</span>Go Live</div>
+    </div>
     <div class="sfooter">
       <div class="suser"><strong>Admin</strong>Brothers Gym Owner</div>
       <button class="lout" onclick="doLogout()">Logout</button>
@@ -387,92 +421,71 @@ tr:hover td{background:rgba(255,255,255,.02);}
 
     <!-- MEMBERS -->
     <div class="page" id="ap-members">
-      <div class="ptitle">All Members</div>
-      <div class="psub">Manage active memberships.</div>
+      <div class="ptitle">All Members</div><div class="psub">Manage active memberships.</div>
       <div class="card">
-        <div class="ch"><span class="ct">Members</span>
-          <div class="ca">
-            <input class="srch" id="mSrch" placeholder="Search name / phone..." oninput="renderMembers()">
-            <button class="sb" onclick="aPage('addmember')">+ Add Member</button>
-          </div>
-        </div>
-        <div class="card-scroll"><table><thead><tr><th>Name</th><th>Phone</th><th>Plan</th><th>Joined</th><th>Expiry</th><th>Status</th><th>Payment</th><th>Actions</th></tr></thead>
-        <tbody id="mBody"></tbody></table></div>
+        <div class="ch"><span class="ct">Members</span><div class="ca"><input class="srch" id="mSrch" placeholder="Search name / phone..." oninput="renderMembers()"><button class="sb" onclick="aPage('addmember')">+ Add Member</button></div></div>
+        <div class="card-scroll"><table><thead><tr><th>Name</th><th>Phone</th><th>Plan</th><th>Joined</th><th>Expiry</th><th>Status</th><th>Payment</th><th>Actions</th></tr></thead><tbody id="mBody"></tbody></table></div>
       </div>
     </div>
 
-    <!-- PENDING PAYMENTS -->
+    <!-- PENDING -->
     <div class="page" id="ap-pending">
-      <div class="ptitle">Pending Members</div>
-      <div class="psub">Members who signed up but payment not yet confirmed.</div>
+      <div class="ptitle">Pending Members</div><div class="psub">Members awaiting payment confirmation.</div>
       <div class="card">
         <div class="ch"><span class="ct">Awaiting Confirmation</span><button class="sb ol" onclick="loadAdminData()">↻ Refresh</button></div>
-        <div class="card-scroll"><table><thead><tr><th>Name</th><th>Phone</th><th>Signed Up</th><th>Action</th></tr></thead>
-        <tbody id="pendingBody"></tbody></table></div>
+        <div class="card-scroll"><table><thead><tr><th>Name</th><th>Phone</th><th>Signed Up</th><th>Action</th></tr></thead><tbody id="pendingBody"></tbody></table></div>
       </div>
     </div>
 
     <!-- ADD MEMBER -->
     <div class="page" id="ap-addmember">
-      <div class="ptitle">Add Member</div>
-      <div class="psub">Register a new member directly.</div>
-      <div class="card" style="max-width:600px;">
+      <div class="ptitle">Add Member</div><div class="psub">Register a new member directly.</div>
+      <div class="card" style="max-width:580px;">
         <div class="ch"><span class="ct">Member Details</span></div>
-        <div style="padding:22px;">
+        <div style="padding:20px;">
           <div class="mrow">
             <div class="fg"><label>Full Name *</label><input id="am_name" placeholder="Rahul Kumar"></div>
-            <div class="fg"><label>Phone *</label><input id="am_phone" type="tel" placeholder="98765 43210" oninput="cleanPhone(this)"></div>
+            <div class="fg"><label>Phone *</label><input id="am_phone" type="tel" placeholder="98765 43210" oninput="cleanPhone(this)" inputmode="numeric"></div>
           </div>
           <div class="mrow">
             <div class="fg"><label>Admission Date *</label><input id="am_date" type="date"></div>
-            <div class="fg"><label>Membership Plan *</label>
-              <select id="am_plan"><option value="monthly">Monthly — ₹800</option><option value="quarterly">Quarterly — ₹2100</option><option value="annual">Annual — ₹7500</option></select>
-            </div>
+            <div class="fg"><label>Membership Plan *</label><select id="am_plan"><option value="monthly">Monthly — ₹800</option><option value="quarterly">Quarterly — ₹2100</option><option value="annual">Annual — ₹7500</option></select></div>
           </div>
           <div class="mrow">
             <div class="fg"><label>Gender</label><select id="am_gender"><option>Male</option><option>Female</option><option>Other</option></select></div>
             <div class="fg"><label>Emergency Contact</label><input id="am_emg" placeholder="Phone number"></div>
           </div>
-          <div class="fg"><label>Health Notes</label><input id="am_notes" placeholder="Any remarks (injuries, goals...)"></div>
+          <div class="fg"><label>Notes</label><input id="am_notes" placeholder="Any remarks..."></div>
           <div class="fg"><label>Payment Status</label><select id="am_pay"><option value="paid">Paid</option><option value="pending">Pending</option></select></div>
-          <div style="background:rgba(255,60,0,.07);border:1px solid rgba(255,60,0,.25);border-radius:12px;padding:18px;margin-top:8px;">
-            <div style="font-size:11px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--p);margin-bottom:14px;">🔐 Member Login Password</div>
+          <div style="background:rgba(255,60,0,.06);border:1px solid rgba(255,60,0,.2);border-radius:10px;padding:16px;margin-top:8px;">
+            <div style="font-size:10px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--p);margin-bottom:12px;">🔐 Member Login Password</div>
             <div class="mrow" style="margin-bottom:0;">
-              <div class="fg" style="margin-bottom:0;position:relative;">
-                <label>Set Password *</label>
-                <input type="password" id="am_pass" placeholder="Min 6 characters" style="padding-right:42px;">
-                <button type="button" onclick="togglePw('am_pass',this)" style="position:absolute;right:10px;bottom:11px;background:none;border:none;color:var(--mu);cursor:pointer;font-size:15px;padding:0;">👁</button>
-              </div>
-              <div class="fg" style="margin-bottom:0;">
-                <label>Confirm Password *</label>
-                <input type="password" id="am_pass2" placeholder="Repeat password">
-              </div>
+              <div class="fg" style="margin-bottom:0;position:relative;"><label>Set Password *</label><input type="password" id="am_pass" placeholder="Min 6 characters" style="padding-right:40px;"><button type="button" onclick="togglePw('am_pass',this)" style="position:absolute;right:10px;bottom:11px;background:none;border:none;color:var(--mu);cursor:pointer;font-size:14px;padding:0;">👁</button></div>
+              <div class="fg" style="margin-bottom:0;"><label>Confirm Password *</label><input type="password" id="am_pass2" placeholder="Repeat password"></div>
             </div>
           </div>
           <div id="amMsg" class="msg"></div>
-          <button class="btn" onclick="addMember()" style="margin-top:16px;">💾 Save Member</button>
+          <button class="btn" onclick="addMember()" style="margin-top:14px;">💾 Save Member</button>
         </div>
       </div>
     </div>
 
     <!-- PAYMENTS -->
     <div class="page" id="ap-payments">
-      <div class="ptitle">Payments</div><div class="psub">All fee collections and pending dues.</div>
+      <div class="ptitle">Payments</div><div class="psub">All fee collections and dues.</div>
       <div class="card"><div class="ch"><span class="ct">Payment Records</span><input class="srch" id="pSrch" placeholder="Search member..." oninput="renderPayments()"></div>
-        <div class="card-scroll"><table><thead><tr><th>Member</th><th>Phone</th><th>Plan</th><th>Amount</th><th>Date</th><th>Status</th><th></th></tr></thead>
-        <tbody id="pBody"></tbody></table></div>
+        <div class="card-scroll"><table><thead><tr><th>Member</th><th>Phone</th><th>Plan</th><th>Amount</th><th>Date</th><th>Status</th><th></th></tr></thead><tbody id="pBody"></tbody></table></div>
       </div>
     </div>
 
     <!-- ANNOUNCEMENTS -->
     <div class="page" id="ap-announce">
-      <div class="ptitle">Announcements</div>
-      <div class="psub">Send updates to all members — they see it in portal and get a notification.</div>
-      <div class="card" style="max-width:600px;margin-bottom:22px;">
+      <div class="ptitle">Announcements</div><div class="psub">Send updates to all members.</div>
+      <div class="card" style="max-width:580px;margin-bottom:20px;">
         <div class="ch"><span class="ct">📢 New Announcement</span></div>
-        <div style="padding:22px;">
-          <div class="fg"><label>Title *</label><input id="ann_title" placeholder="e.g. Holiday Schedule, New Timings..."></div>
-          <div class="fg"><label>Message *</label><textarea id="ann_body" placeholder="Write your message here..."></textarea></div>
+        <div style="padding:20px;">
+          <div class="fg"><label>Title *</label><input id="ann_title" placeholder="e.g. Holiday Schedule..."></div>
+          <div class="fg"><label>Message *</label><textarea id="ann_body" placeholder="Write your message..."></textarea></div>
           <div id="annMsg" class="msg"></div>
           <button class="btn" onclick="postAnnouncement()" style="margin-top:8px;">📢 Send to All Members</button>
         </div>
@@ -485,52 +498,53 @@ tr:hover td{background:rgba(255,255,255,.02);}
 
     <!-- NOTIFICATIONS -->
     <div class="page" id="ap-notifs">
-      <div class="ptitle">Notifications</div><div class="psub">Member logins, signups and expiry alerts.</div>
-      <div class="card">
-        <div class="ch"><span class="ct">Activity Feed</span><button class="sb ol" onclick="clearAdminNotifs()">Clear All</button></div>
-        <div id="aNotifList"><div class="empty">Loading...</div></div>
-      </div>
+      <div class="ptitle">Notifications</div><div class="psub">Member activity &amp; expiry alerts.</div>
+      <div class="card"><div class="ch"><span class="ct">Activity Feed</span><button class="sb ol" onclick="clearAdminNotifs()">Clear All</button></div><div id="aNotifList"><div class="empty">Loading...</div></div></div>
     </div>
 
     <!-- LIVE -->
     <div class="page" id="ap-live">
-      <div class="ptitle">Go Live</div>
-      <div class="psub">Start a live session — members see it instantly. Visible to everyone on main website too.</div>
+      <div class="ptitle">Go Live</div><div class="psub">Start a live session — visible to everyone instantly.</div>
       <div class="live-admin-grid">
         <div>
-          <div id="aLiveOff" class="card" style="padding:24px;">
-            <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--mu);margin-bottom:16px;">Choose Platform</div>
-            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px;" id="livePlatformBtns">
-              <button onclick="selectPlatform('youtube')" id="plat-youtube" class="plat-btn active-plat">▶ YouTube</button>
+          <div id="aLiveOff" class="card" style="padding:22px;">
+            <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--mu);margin-bottom:14px;">Choose Platform</div>
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px;">
+              <button onclick="selectPlatform('youtube')"   id="plat-youtube"   class="plat-btn active-plat">▶ YouTube</button>
               <button onclick="selectPlatform('instagram')" id="plat-instagram" class="plat-btn">📸 Instagram</button>
-              <button onclick="selectPlatform('facebook')" id="plat-facebook" class="plat-btn">📘 Facebook</button>
+              <button onclick="selectPlatform('facebook')"  id="plat-facebook"  class="plat-btn">📘 Facebook</button>
             </div>
-            <div id="platformHelp" style="font-size:12px;color:var(--mu);background:rgba(255,255,255,.03);border-radius:8px;padding:10px 14px;margin-bottom:16px;line-height:1.7;"></div>
-            <div class="fg"><label id="liveUrlLabel">YouTube / Facebook Live URL *</label><input id="aLiveUrl" placeholder="https://youtube.com/live/..."></div>
+            <div id="platformHelp" style="font-size:12px;color:var(--mu);background:rgba(255,255,255,.03);border-radius:8px;padding:10px 12px;margin-bottom:14px;line-height:1.7;"></div>
+            <div class="fg"><label id="liveUrlLabel">YouTube Live URL *</label><input id="aLiveUrl" placeholder="https://youtube.com/live/..."></div>
             <div class="fg"><label>Session Title</label><input id="aLiveTitle" placeholder="Morning Workout, Chest Day..."></div>
             <button class="btn" onclick="adminGoLive()">🔴 Go Live Now</button>
           </div>
           <div id="aLiveOn" style="display:none;">
-            <div style="background:rgba(255,60,0,.08);border:1px solid rgba(255,60,0,.3);border-radius:14px;padding:14px 16px;margin-bottom:14px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+            <div style="background:rgba(255,60,0,.08);border:1px solid rgba(255,60,0,.3);border-radius:12px;padding:12px 14px;margin-bottom:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
               <div class="ldot"></div>
-              <div style="flex:1;min-width:0;"><strong id="aLiveTitle2" style="display:block;"></strong><div style="font-size:12px;color:var(--mu);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" id="aLiveUrlShow"></div></div>
-              <button class="sb" style="background:var(--rd);" onclick="adminStopLive()">⏹ Stop</button>
+              <div style="flex:1;min-width:0;"><strong id="aLiveTitle2" style="display:block;"></strong><div style="font-size:11px;color:var(--mu);margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" id="aLiveUrlShow"></div></div>
+              <button class="sb rd" onclick="adminStopLive()">⏹ Stop</button>
             </div>
-            <div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:14px;background:#000;">
-              <iframe id="aLiveFrame" style="position:absolute;top:0;left:0;width:100%;height:100%;border:none;" allowfullscreen allow="autoplay; encrypted-media"></iframe>
+            <!-- YouTube/Facebook embed -->
+            <div id="aYtFbEmbed" style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:12px;background:#000;display:none;">
+              <iframe id="aLiveFrame" style="position:absolute;top:0;left:0;width:100%;height:100%;border:none;" allowfullscreen allow="autoplay;encrypted-media"></iframe>
             </div>
-            <div id="igLiveFallback" style="display:none;padding:20px;text-align:center;background:rgba(255,255,255,.03);border-radius:14px;margin-top:8px;">
-              <div style="font-size:13px;color:var(--mu);margin-bottom:10px;">Instagram Live cannot be embedded. Share this link with members:</div>
-              <a id="igLiveLink" href="#" target="_blank" style="color:var(--p);font-weight:700;word-break:break-all;font-size:14px;"></a>
+            <!-- Instagram live card (cannot be embedded) -->
+            <div id="aIgLiveCard" style="display:none;border:1px solid rgba(131,58,180,.4);border-radius:12px;padding:28px;text-align:center;background:linear-gradient(135deg,rgba(131,58,180,.06),rgba(253,29,29,.04));">
+              <div style="font-size:48px;margin-bottom:12px;">📸</div>
+              <div style="font-family:var(--fd);font-size:20px;font-weight:900;text-transform:uppercase;margin-bottom:8px;">Instagram Live Active</div>
+              <p style="color:var(--mu);font-size:13px;line-height:1.6;margin-bottom:16px;">Instagram doesn't allow embedding. Members will see a direct link button to open in Instagram app.</p>
+              <a id="aIgLiveLink" href="#" target="_blank" style="color:var(--p);font-weight:700;word-break:break-all;font-size:13px;"></a>
             </div>
           </div>
         </div>
-        <div class="card" style="display:flex;flex-direction:column;height:420px;">
-          <div style="padding:12px 16px;border-bottom:1px solid var(--br);font-weight:600;font-size:14px;">💬 Live Chat</div>
-          <div id="aChatMsgs" style="flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:8px;min-height:0;"></div>
-          <div style="display:flex;gap:8px;padding:10px 12px;border-top:1px solid var(--br);">
-            <input id="aChatIn" style="flex:1;background:rgba(255,255,255,.05);border:1px solid var(--br);border-radius:7px;color:var(--tx);font-family:var(--fb);font-size:13px;padding:8px 12px;outline:none;" placeholder="Type message..." onkeydown="if(event.key==='Enter')sendAChat()">
-            <button style="background:var(--p);border:none;color:white;font-size:15px;padding:8px 12px;border-radius:7px;cursor:pointer;" onclick="sendAChat()">➤</button>
+        <!-- Chat -->
+        <div class="card" style="display:flex;flex-direction:column;height:400px;">
+          <div style="padding:10px 14px;border-bottom:1px solid var(--br);font-weight:600;font-size:13px;">💬 Live Chat</div>
+          <div id="aChatMsgs" style="flex:1;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:7px;min-height:0;"></div>
+          <div style="display:flex;gap:7px;padding:9px 10px;border-top:1px solid var(--br);">
+            <input id="aChatIn" style="flex:1;background:rgba(255,255,255,.05);border:1px solid var(--br);border-radius:6px;color:var(--tx);font-family:var(--fb);font-size:13px;padding:7px 10px;outline:none;" placeholder="Send a message..." onkeydown="if(event.key==='Enter')sendAChat()">
+            <button style="background:var(--p);border:none;color:white;font-size:14px;padding:7px 11px;border-radius:6px;cursor:pointer;" onclick="sendAChat()">➤</button>
           </div>
         </div>
       </div>
@@ -539,17 +553,19 @@ tr:hover td{background:rgba(255,255,255,.02);}
   </div>
 </div>
 
-<!-- ══════════════ MEMBER VIEW ══════════════ -->
+<!-- ══ MEMBER VIEW ══ -->
 <div class="view" id="memberView">
   <div class="sidebar" id="mSb">
     <div class="slogo">My Gym<small>Brothers Gym Portal</small></div>
-    <div class="ni on" data-page="home"       onclick="mPage('home')"><span class="ico">🏠</span>Home</div>
-    <div class="ni" data-page="membership"    onclick="mPage('membership')"><span class="ico">🎫</span>Membership</div>
-    <div class="ni" data-page="payments"      onclick="mPage('payments')"><span class="ico">💳</span>Payments</div>
-    <div class="ni" data-page="announce"      onclick="mPage('announce')"><span class="ico">📢</span>Announcements<span class="nbadge" id="mAnnBadge" style="display:none"></span></div>
-    <div class="ni" data-page="notifs"        onclick="mPage('notifs')"><span class="ico">🔔</span>Notifications<span class="nbadge" id="mNBadge" style="display:none"></span></div>
-    <div class="ni" data-page="live"          onclick="mPage('live')"><span class="ico">📺</span>Watch Live</div>
-    <div class="ni" data-page="settings"      onclick="mPage('settings')"><span class="ico">⚙️</span>Settings</div>
+    <div class="sidebar-nav">
+      <div class="ni on"  data-page="home"       onclick="mPage('home')"><span class="ico">🏠</span>Home</div>
+      <div class="ni"     data-page="membership" onclick="mPage('membership')"><span class="ico">🎫</span>Membership</div>
+      <div class="ni"     data-page="payments"   onclick="mPage('payments')"><span class="ico">💳</span>Payments</div>
+      <div class="ni"     data-page="announce"   onclick="mPage('announce')"><span class="ico">📢</span>Announcements<span class="nbadge" id="mAnnBadge" style="display:none"></span></div>
+      <div class="ni"     data-page="notifs"     onclick="mPage('notifs')"><span class="ico">🔔</span>Notifications<span class="nbadge" id="mNBadge" style="display:none"></span></div>
+      <div class="ni"     data-page="live"       onclick="mPage('live')"><span class="ico">📺</span>Watch Live</div>
+      <div class="ni"     data-page="settings"   onclick="mPage('settings')"><span class="ico">⚙️</span>Settings</div>
+    </div>
     <div class="sfooter">
       <div class="suser" id="mSUser"><strong>Member</strong></div>
       <button class="lout" onclick="doLogout()">Logout</button>
@@ -564,7 +580,7 @@ tr:hover td{background:rgba(255,255,255,.02);}
       <div id="mProfileCard"></div>
       <div id="mStatusBox"></div>
       <div id="mMemCard"></div>
-      <div class="card" id="mRecPay"></div>
+      <div id="mRecPay"></div>
     </div>
 
     <!-- MEMBERSHIP -->
@@ -593,26 +609,33 @@ tr:hover td{background:rgba(255,255,255,.02);}
 
     <!-- LIVE -->
     <div class="page" id="mp-live">
-      <div class="ptitle">📺 Watch Live</div><div class="psub">Live gym sessions. Visible to everyone — no login required on main website.</div>
-      <div class="card" style="margin-bottom:16px;overflow:hidden;">
-        <div style="padding:12px 18px;background:rgba(255,60,0,.08);border-bottom:1px solid var(--br);display:flex;align-items:center;gap:10px;font-family:var(--fd);font-weight:800;font-size:16px;text-transform:uppercase;letter-spacing:1px;">
-          <div class="ldot" id="mLiveDot" style="background:#555;animation:none;"></div>
-          Gym Live &nbsp;<span id="mLiveStat" style="font-size:13px;font-weight:400;opacity:.7;text-transform:none;">Offline</span>
-          <span id="mLiveTitle" style="font-size:12px;color:var(--mu);font-weight:400;text-transform:none;margin-left:4px;"></span>
+      <div class="ptitle">📺 Watch Live</div><div class="psub">Live gym sessions. Visible to everyone on main website too.</div>
+      <div class="card" style="margin-bottom:14px;overflow:hidden;">
+        <div style="padding:11px 16px;background:rgba(255,60,0,.08);border-bottom:1px solid var(--br);display:flex;align-items:center;gap:9px;font-family:var(--fd);font-weight:800;font-size:15px;text-transform:uppercase;letter-spacing:1px;">
+          <div class="ldot" id="mLiveDot" style="background:#444;animation:none;"></div>
+          Gym Live &nbsp;<span id="mLiveStat" style="font-size:12px;font-weight:400;opacity:.7;text-transform:none;">Offline</span>
+          <span id="mLiveTitle2" style="font-size:11px;color:var(--mu);font-weight:400;text-transform:none;margin-left:3px;"></span>
         </div>
-        <div id="mLiveOff" style="padding:48px 24px;text-align:center;">
-          <div style="font-size:52px;margin-bottom:14px;">💪</div>
-          <div style="font-family:var(--fd);font-size:20px;font-weight:900;text-transform:uppercase;margin-bottom:8px;">No Live Stream Active</div>
-          <p style="color:var(--mu);font-size:14px;">Check back during session hours!</p>
-          <div style="margin-top:16px;padding:10px 16px;background:rgba(255,255,255,.04);border-radius:8px;font-size:13px;color:var(--mu);">🕐 Morning: 5 AM – 10 AM &nbsp;|&nbsp; 🌆 Evening: 4 PM – 10 PM</div>
+        <div id="mLiveOff" style="padding:44px 22px;text-align:center;">
+          <div style="font-size:48px;margin-bottom:12px;">💪</div>
+          <div style="font-family:var(--fd);font-size:18px;font-weight:900;text-transform:uppercase;margin-bottom:7px;">No Live Stream Active</div>
+          <p style="color:var(--mu);font-size:13px;">Check back during session hours!</p>
+          <div style="margin-top:14px;padding:9px 14px;background:rgba(255,255,255,.04);border-radius:8px;font-size:12px;color:var(--mu);">🕐 Morning: 5 AM – 10 AM &nbsp;|&nbsp; 🌆 Evening: 4 PM – 10 PM</div>
         </div>
         <div id="mLiveOn" style="display:none;">
-          <div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;">
-            <iframe id="mLiveFrame" style="position:absolute;top:0;left:0;width:100%;height:100%;border:none;" allowfullscreen allow="autoplay; encrypted-media"></iframe>
+          <!-- YouTube/Facebook embed -->
+          <div id="mYtFbEmbed" style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;display:none;">
+            <iframe id="mLiveFrame" style="position:absolute;top:0;left:0;width:100%;height:100%;border:none;" allowfullscreen allow="autoplay;encrypted-media"></iframe>
           </div>
-          <div style="padding:10px 16px;display:flex;gap:12px;align-items:center;">
-            <span id="mLiveUrlLink" style="font-size:12px;color:var(--mu);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
-            <a id="mLiveOpenBtn" href="#" target="_blank" style="font-size:13px;color:var(--p);text-decoration:none;font-weight:600;white-space:nowrap;">▶ Open in YouTube</a>
+          <!-- Instagram live card -->
+          <div id="mIgLiveCard" style="display:none;padding:36px 22px;text-align:center;">
+            <div style="font-size:52px;margin-bottom:12px;">📸</div>
+            <div style="font-family:var(--fd);font-size:20px;font-weight:900;text-transform:uppercase;margin-bottom:7px;">Instagram Live!</div>
+            <p style="color:var(--mu);font-size:13px;line-height:1.6;margin-bottom:16px;">The gym is live on Instagram! Tap below to watch.</p>
+            <a id="mIgLiveLink" href="https://instagram.com/gymlover_govindshukla70" target="_blank" class="btn" style="text-decoration:none;display:inline-block;width:auto;padding:12px 28px;">📸 Open Instagram Live</a>
+          </div>
+          <div style="padding:9px 14px;display:flex;gap:10px;align-items:center;">
+            <a id="mLiveOpenBtn" href="#" target="_blank" style="font-size:12px;color:var(--p);text-decoration:none;font-weight:600;white-space:nowrap;">▶ Open externally</a>
           </div>
         </div>
       </div>
@@ -621,14 +644,14 @@ tr:hover td{background:rgba(255,255,255,.02);}
     <!-- SETTINGS -->
     <div class="page" id="mp-settings">
       <div class="ptitle">Settings</div><div class="psub">Update your login password.</div>
-      <div class="card" style="max-width:440px;">
+      <div class="card" style="max-width:400px;">
         <div class="ch"><span class="ct">🔐 Change Password</span></div>
-        <div style="padding:22px;">
-          <div class="fg" style="position:relative;"><label>Current Password</label><input type="password" id="cpOld" placeholder="Enter current password" style="padding-right:42px;"><button type="button" onclick="togglePw('cpOld',this)" style="position:absolute;right:10px;bottom:11px;background:none;border:none;color:var(--mu);cursor:pointer;font-size:15px;padding:0;">👁</button></div>
-          <div class="fg" style="position:relative;"><label>New Password</label><input type="password" id="cpNew" placeholder="Min 6 characters" style="padding-right:42px;"><button type="button" onclick="togglePw('cpNew',this)" style="position:absolute;right:10px;bottom:11px;background:none;border:none;color:var(--mu);cursor:pointer;font-size:15px;padding:0;">👁</button></div>
+        <div style="padding:20px;">
+          <div class="fg" style="position:relative;"><label>Current Password</label><input type="password" id="cpOld" placeholder="Enter current password" style="padding-right:40px;"><button type="button" onclick="togglePw('cpOld',this)" style="position:absolute;right:10px;bottom:11px;background:none;border:none;color:var(--mu);cursor:pointer;font-size:14px;padding:0;">👁</button></div>
+          <div class="fg" style="position:relative;"><label>New Password</label><input type="password" id="cpNew" placeholder="Min 6 characters" style="padding-right:40px;"><button type="button" onclick="togglePw('cpNew',this)" style="position:absolute;right:10px;bottom:11px;background:none;border:none;color:var(--mu);cursor:pointer;font-size:14px;padding:0;">👁</button></div>
           <div class="fg"><label>Confirm New Password</label><input type="password" id="cpNew2" placeholder="Repeat new password" onkeydown="if(event.key==='Enter')doChangePw()"></div>
           <div id="cpMsg" class="msg"></div>
-          <button class="btn" onclick="doChangePw()" style="margin-top:12px;">🔐 Update Password</button>
+          <button class="btn" onclick="doChangePw()" style="margin-top:10px;">🔐 Update Password</button>
         </div>
       </div>
     </div>
@@ -638,13 +661,13 @@ tr:hover td{background:rgba(255,255,255,.02);}
 
 <!-- MODALS -->
 <div class="mbg" id="adminMod">
-  <div class="modal" style="max-width:350px;">
+  <div class="modal" style="max-width:340px;">
     <button class="xbtn" onclick="closeMod('adminMod')">✕</button>
     <div class="mtitle">Admin Login</div>
     <div class="fg"><label>Admin Password</label><input type="password" id="aPw" placeholder="Enter admin password" onkeydown="if(event.key==='Enter')doAdminLogin()"></div>
     <div id="aMMsg" class="msg"></div>
-    <button class="btn" onclick="doAdminLogin()" style="margin-top:12px;">Login as Admin</button>
-    <p style="font-size:12px;color:var(--mu);text-align:center;margin-top:12px;">Contact gym owner for admin access.</p>
+    <button class="btn" onclick="doAdminLogin()" style="margin-top:10px;">Login as Admin</button>
+    <p style="font-size:12px;color:var(--mu);text-align:center;margin-top:10px;">Contact gym owner for admin access.</p>
   </div>
 </div>
 
@@ -667,97 +690,82 @@ tr:hover td{background:rgba(255,255,255,.02);}
 </div>
 
 <div class="mbg" id="renewMod">
-  <div class="modal" style="max-width:420px;">
+  <div class="modal" style="max-width:400px;">
     <button class="xbtn" onclick="closeMod('renewMod')">✕</button>
     <div class="mtitle">Renew Membership</div>
-    <p style="color:var(--mu);font-size:14px;margin-bottom:18px;">Member: <strong id="renewName" style="color:var(--tx)"></strong></p>
+    <p style="color:var(--mu);font-size:13px;margin-bottom:16px;">Member: <strong id="renewName" style="color:var(--tx)"></strong></p>
     <div class="fg"><label>New Plan</label><select id="rPlan"><option value="monthly">Monthly ₹800</option><option value="quarterly">Quarterly ₹2100</option><option value="annual">Annual ₹7500</option></select></div>
     <div class="fg"><label>Payment Date</label><input id="rDate" type="date"></div>
     <div class="fg"><label>Payment Status</label><select id="rStatus"><option value="paid">Paid — Confirmed</option><option value="pending">Pending</option></select></div>
-    <div class="mfoot"><button class="btn btn-ol" onclick="closeMod('renewMod')">Cancel</button><button class="btn sb gn" style="background:var(--gn)" onclick="confirmRenew()">✓ Confirm Renewal</button></div>
+    <div class="mfoot"><button class="btn btn-ol" onclick="closeMod('renewMod')">Cancel</button><button class="btn" style="background:var(--gn)" onclick="confirmRenew()">✓ Confirm Renewal</button></div>
   </div>
 </div>
 
 <div class="mbg" id="confirmPayMod">
-  <div class="modal" style="max-width:420px;">
+  <div class="modal" style="max-width:400px;">
     <button class="xbtn" onclick="closeMod('confirmPayMod')">✕</button>
     <div class="mtitle">✅ Confirm Payment</div>
-    <p style="color:var(--mu);font-size:14px;margin-bottom:18px;">Member: <strong id="cpMemberName" style="color:var(--tx)"></strong></p>
+    <p style="color:var(--mu);font-size:13px;margin-bottom:16px;">Member: <strong id="cpMemberName" style="color:var(--tx)"></strong></p>
     <input type="hidden" id="cpMemberId">
     <div class="fg"><label>Assign Plan</label><select id="cpPlan"><option value="monthly">Monthly ₹800</option><option value="quarterly">Quarterly ₹2100</option><option value="annual">Annual ₹7500</option></select></div>
     <div class="fg"><label>Payment Date</label><input id="cpPayDate" type="date"></div>
-    <div style="background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.2);border-radius:8px;padding:10px 14px;font-size:13px;color:var(--mu);margin-bottom:4px;">
-      ✅ This will activate the member and send them a notification.
-    </div>
-    <div class="mfoot"><button class="btn btn-ol" onclick="closeMod('confirmPayMod')">Cancel</button><button class="btn" style="background:var(--gn);" onclick="doConfirmPayment()">✅ Confirm & Activate</button></div>
+    <div style="background:rgba(34,197,94,.07);border:1px solid rgba(34,197,94,.2);border-radius:8px;padding:9px 12px;font-size:12px;color:var(--mu);margin-bottom:4px;">✅ This will activate the member and notify them.</div>
+    <div class="mfoot"><button class="btn btn-ol" onclick="closeMod('confirmPayMod')">Cancel</button><button class="btn" style="background:var(--gn);" onclick="doConfirmPayment()">✅ Confirm &amp; Activate</button></div>
   </div>
 </div>
 
 <div class="mbg" id="delMod">
-  <div class="modal" style="max-width:400px;text-align:center;">
-    <div style="font-size:52px;margin-bottom:12px;">⚠️</div>
-    <div style="font-family:var(--fd);font-size:26px;font-weight:900;text-transform:uppercase;margin-bottom:10px;">Remove Member?</div>
-    <div id="delMemberName" style="font-size:20px;font-weight:700;color:var(--rd);margin-bottom:20px;"></div>
-    <div style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:10px;padding:12px 16px;font-size:13px;color:var(--rd);margin-bottom:24px;">
-      This will permanently delete their profile, membership and all data. Cannot be undone.
-    </div>
+  <div class="modal" style="max-width:380px;text-align:center;">
+    <div style="font-size:48px;margin-bottom:10px;">⚠️</div>
+    <div style="font-family:var(--fd);font-size:24px;font-weight:900;text-transform:uppercase;margin-bottom:8px;">Remove Member?</div>
+    <div id="delMemberName" style="font-size:18px;font-weight:700;color:var(--rd);margin-bottom:16px;"></div>
+    <div style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:10px;padding:11px 14px;font-size:13px;color:var(--rd);margin-bottom:20px;">Permanently deletes all their data. Cannot be undone.</div>
     <div style="display:flex;gap:10px;">
       <button class="btn btn-ol" onclick="closeMod('delMod')" style="flex:1;">Cancel</button>
-      <button class="btn" id="delConfirmBtn" onclick="confirmDelete()" style="flex:1;background:var(--rd);">🗑️ Yes, Remove</button>
+      <button class="btn" id="delConfirmBtn" onclick="confirmDelete()" style="flex:1;background:var(--rd);">🗑️ Remove</button>
     </div>
   </div>
 </div>
+
 <script>
-// ══════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════
 //  CONFIG & STATE
-// ══════════════════════════════════════════════════════
-const API = '';
-const PLAN_DAYS  = {monthly:30, quarterly:90, annual:365};
-const PLAN_PRICE = {monthly:800, quarterly:2100, annual:7500};
-const PLAN_LABEL = {monthly:'Monthly ₹800', quarterly:'Quarterly ₹2100', annual:'Annual ₹7500'};
+// ════════════════════════════════════════════════════
+const API='';
+const PLAN_DAYS  ={monthly:30,quarterly:90,annual:365};
+const PLAN_PRICE ={monthly:800,quarterly:2100,annual:7500};
+const PLAN_LABEL ={monthly:'Monthly ₹800',quarterly:'Quarterly ₹2100',annual:'Annual ₹7500'};
 
-// Persistent session using localStorage (survives page refresh/close)
-let session = null;
-try { session = JSON.parse(localStorage.getItem('gym_sess') || 'null'); } catch(e) { session = null; }
+let session=null;
+try{session=JSON.parse(localStorage.getItem('gym_sess')||'null');}catch(e){session=null;}
 
-let allMembers=[], allPayments=[], allNotifs=[], otpVerified={signup:false,forgot:false}, otpTimers={};
-let deleteTarget=null, renewTarget=null;
+let allMembers=[],allPayments=[],allNotifs=[],otpVerified={signup:false,forgot:false},otpTimers={};
+let deleteTarget=null,renewTarget=null;
 
-// ══════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════
 //  HELPERS
-// ══════════════════════════════════════════════════════
-async function api(method, path, body) {
-  try {
-    const opts = {method, headers:{'Content-Type':'application/json'}};
-    if (body) opts.body = JSON.stringify(body);
-    const r = await fetch(API+path, opts);
-    if (!r.ok) return {success:false, message:'Server error ('+r.status+'). Try again.'};
-    const data = await r.json();
-    if (data && data.success===false && data.message && data.message.includes('connecting')) {
-      floatNotif('⏳ Starting...','Server is starting up. Wait 10 seconds and retry.','warn');
-    }
-    return data;
-  } catch(e) {
-    return {success:false, message:'Cannot reach server. Check internet.'};
-  }
+// ════════════════════════════════════════════════════
+async function api(method,path,body){
+  try{
+    const opts={method,headers:{'Content-Type':'application/json'}};
+    if(body) opts.body=JSON.stringify(body);
+    const r=await fetch(API+path,opts);
+    if(!r.ok) return{success:false,message:'Server error ('+r.status+').'};
+    return await r.json();
+  }catch(e){return{success:false,message:'Cannot reach server. Check internet.'};}
 }
 
-function saveSession(s) {
-  session = s;
-  if (s) localStorage.setItem('gym_sess', JSON.stringify(s));
-  else localStorage.removeItem('gym_sess');
-}
+function saveSession(s){session=s;if(s)localStorage.setItem('gym_sess',JSON.stringify(s));else localStorage.removeItem('gym_sess');}
+function showMsg(id,txt,type){const el=document.getElementById(id);el.textContent=txt;el.className='msg '+type;el.style.display='block';setTimeout(()=>el.style.display='none',6000);}
+function setBtn(id,loading,txt){const b=document.getElementById(id);b.disabled=loading;b.innerHTML=loading?'<span class="loading"></span>'+txt:txt;}
+function cleanPhone(inp){inp.value=inp.value.replace(/[^\d]/g,'');}
+function getPhone(id){return document.getElementById(id).value.replace(/\D/g,'').slice(-10);}
+function fmtDate(d){if(!d)return'—';return new Date(d).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});}
+function getExpiry(m){const d=new Date(m.admissionDate);d.setDate(d.getDate()+PLAN_DAYS[m.plan]);return d;}
+function getDaysLeft(m){if(!m.admissionDate||!m.plan)return-999;const exp=getExpiry(m);const now=new Date();now.setHours(0,0,0,0);return Math.ceil((exp-now)/86400000);}
+function getStatus(m){if(!m.plan||m.memberStatus==='no-plan')return'no-plan';if(m.memberStatus==='pending-payment')return'pending';const d=getDaysLeft(m);return d<=0?'expired':d<=7?'expiring':'active';}
 
-function showMsg(id,txt,type) { const el=document.getElementById(id); el.textContent=txt; el.className='msg '+type; el.style.display='block'; setTimeout(()=>el.style.display='none',6000); }
-function setBtn(id,loading,txt) { const b=document.getElementById(id); b.disabled=loading; b.innerHTML=loading?'<span class="loading"></span>'+txt:txt; }
-function cleanPhone(inp) { inp.value=inp.value.replace(/[^\d+\s-]/g,''); }
-function getPhone(id) { return document.getElementById(id).value.replace(/\D/g,'').slice(-10); }
-function fmtDate(d) { if(!d) return '—'; return new Date(d).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}); }
-function getExpiry(m) { const d=new Date(m.admissionDate); d.setDate(d.getDate()+PLAN_DAYS[m.plan]); return d; }
-function getDaysLeft(m) { if(!m.admissionDate||!m.plan) return -999; const exp=getExpiry(m); const now=new Date(); now.setHours(0,0,0,0); return Math.ceil((exp-now)/86400000); }
-function getStatus(m) { if(!m.plan||m.memberStatus==='no-plan') return 'no-plan'; if(m.memberStatus==='pending-payment') return 'pending'; const d=getDaysLeft(m); return d<=0?'expired':d<=7?'expiring':'active'; }
-
-function floatNotif(title,desc,type='info') {
+function floatNotif(title,desc,type='info'){
   const wrap=document.getElementById('fnWrap');
   const div=document.createElement('div');
   div.className='fn '+type;
@@ -767,88 +775,76 @@ function floatNotif(title,desc,type='info') {
   setTimeout(()=>{div.classList.remove('show');setTimeout(()=>div.remove(),500);},5000);
 }
 
-function showView(v) { document.querySelectorAll('.view').forEach(x=>x.classList.remove('active')); document.getElementById(v+'View').classList.add('active'); }
-function closeMod(id) { document.getElementById(id).classList.remove('open'); }
-function openAdminModal() { document.getElementById('aPw').value=''; document.getElementById('aMMsg').style.display='none'; document.getElementById('adminMod').classList.add('open'); setTimeout(()=>document.getElementById('aPw').focus(),100); }
-function togglePw(id,btn) { const inp=document.getElementById(id); inp.type=inp.type==='password'?'text':'password'; btn.textContent=inp.type==='password'?'👁':'🙈'; }
+function showView(v){document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));document.getElementById(v+'View').classList.add('active');}
+function closeMod(id){document.getElementById(id).classList.remove('open');}
+function openAdminModal(){document.getElementById('aPw').value='';document.getElementById('aMMsg').style.display='none';document.getElementById('adminMod').classList.add('open');setTimeout(()=>document.getElementById('aPw').focus(),100);}
+function togglePw(id,btn){const inp=document.getElementById(id);inp.type=inp.type==='password'?'text':'password';btn.textContent=inp.type==='password'?'👁':'🙈';}
 
-function toggleSb() {
-  // Only toggle the sidebar that belongs to current view
-  const activeView = document.querySelector('.view.active');
-  const sb = activeView ? activeView.querySelector('.sidebar') : null;
-  if (!sb) return;
-  const isOpen = sb.classList.contains('open');
-  // Close all first
-  document.querySelectorAll('.sidebar').forEach(s=>s.classList.remove('open'));
-  document.getElementById('ovlay').classList.remove('show');
-  if (!isOpen) {
-    sb.classList.add('open');
-    document.getElementById('ovlay').classList.add('show');
-  }
+// ── SIDEBAR TOGGLE (MOBILE) ──
+function toggleSb(){
+  const activeView=document.querySelector('.view.active');
+  if(!activeView)return;
+  const sb=activeView.querySelector('.sidebar');
+  if(!sb)return;
+  const isOpen=sb.classList.contains('open');
+  closeSb();
+  if(!isOpen){sb.classList.add('open');document.getElementById('ovlay').classList.add('show');}
 }
-function closeSb() {
+function closeSb(){
   document.querySelectorAll('.sidebar').forEach(s=>s.classList.remove('open'));
   document.getElementById('ovlay').classList.remove('show');
 }
-function closeSbOnMobile() { if(window.innerWidth<=900) closeSb(); }
+function closeSbOnMobile(){if(window.innerWidth<=900)closeSb();}
 
 // THREE.JS background
-(function(){
-  const scene=new THREE.Scene(), cam=new THREE.PerspectiveCamera(75,innerWidth/innerHeight,.1,1000);
+try{
+  const scene=new THREE.Scene();const cam=new THREE.PerspectiveCamera(75,innerWidth/innerHeight,.1,1000);
   const renderer=new THREE.WebGLRenderer({canvas:document.getElementById('bg3d'),alpha:true,antialias:true});
-  renderer.setSize(innerWidth,innerHeight); renderer.setPixelRatio(Math.min(devicePixelRatio,2));
-  cam.position.z=6;
-  const geo=new THREE.BufferGeometry(), N=1000;
-  const pos=new Float32Array(N*3), col=new Float32Array(N*3);
-  for(let i=0;i<N*3;i+=3){pos[i]=(Math.random()-.5)*22;pos[i+1]=(Math.random()-.5)*22;pos[i+2]=(Math.random()-.5)*22;col[i]=1;col[i+1]=Math.random()*.25;col[i+2]=0;}
-  geo.setAttribute('position',new THREE.BufferAttribute(pos,3));
-  geo.setAttribute('color',new THREE.BufferAttribute(col,3));
-  const mat=new THREE.PointsMaterial({size:.04,vertexColors:true,transparent:true,opacity:.6});
-  const pts=new THREE.Points(geo,mat); scene.add(pts);
-  (function loop(){requestAnimationFrame(loop);pts.rotation.y+=.0006;pts.rotation.x+=.0002;renderer.render(scene,cam);})();
+  renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(Math.min(devicePixelRatio,2));cam.position.z=6;
+  const geo=new THREE.BufferGeometry();const N=800;const pos=new Float32Array(N*3),col=new Float32Array(N*3);
+  for(let i=0;i<N*3;i+=3){pos[i]=(Math.random()-.5)*22;pos[i+1]=(Math.random()-.5)*22;pos[i+2]=(Math.random()-.5)*22;col[i]=1;col[i+1]=Math.random()*.2;col[i+2]=0;}
+  geo.setAttribute('position',new THREE.BufferAttribute(pos,3));geo.setAttribute('color',new THREE.BufferAttribute(col,3));
+  const mat=new THREE.PointsMaterial({size:.04,vertexColors:true,transparent:true,opacity:.5});
+  const pts=new THREE.Points(geo,mat);scene.add(pts);
+  (function loop(){requestAnimationFrame(loop);pts.rotation.y+=.0005;pts.rotation.x+=.0002;renderer.render(scene,cam);})();
   window.addEventListener('resize',()=>{cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
-})();
+}catch(e){}
 
-// ══════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════
 //  OTP
-// ══════════════════════════════════════════════════════
-function startOTPTimer(prefix) {
-  let secs=120; const tid=prefix+'OtpTimer', btid=prefix+'OtpBtn';
+// ════════════════════════════════════════════════════
+function startOTPTimer(prefix){
+  let secs=120;const tid=prefix+'OtpTimer',btid=prefix+'OtpBtn';
   clearInterval(otpTimers[prefix]);
   otpTimers[prefix]=setInterval(()=>{
-    secs--; const el=document.getElementById(tid); if(el) el.textContent='('+secs+'s)';
-    if(secs<=0){clearInterval(otpTimers[prefix]); const btn=document.getElementById(btid); if(btn){btn.disabled=false;btn.textContent='New OTP';} if(el) el.textContent='(expired)';}
+    secs--;const el=document.getElementById(tid);if(el)el.textContent='('+secs+'s)';
+    if(secs<=0){clearInterval(otpTimers[prefix]);const btn=document.getElementById(btid);if(btn){btn.disabled=false;btn.textContent='New OTP';}if(el)el.textContent='(expired)';}
   },1000);
 }
 
-async function sendOTP(flow) {
-  const phoneId=flow==='signup'?'sPhone':'fpPhone', btnId=flow==='signup'?'sOtpBtn':'fpOtpBtn';
-  const dispId=flow==='signup'?'sOtpDisplay':'fpOtpDisplay', grpId=flow==='signup'?'sOtpGroup':'fpOtpGroup';
-  const msgId=flow==='signup'?'sMsg':'fpMsg', phone=getPhone(phoneId);
-  if(phone.length!==10) return showMsg(msgId,'Enter a valid 10-digit phone number.','err');
-  const btn=document.getElementById(btnId); btn.disabled=true; btn.textContent='Getting...';
+async function sendOTP(flow){
+  const phoneId=flow==='signup'?'sPhone':'fpPhone',btnId=flow==='signup'?'sOtpBtn':'fpOtpBtn';
+  const dispId=flow==='signup'?'sOtpDisplay':'fpOtpDisplay',grpId=flow==='signup'?'sOtpGroup':'fpOtpGroup';
+  const msgId=flow==='signup'?'sMsg':'fpMsg',phone=getPhone(phoneId);
+  if(phone.length!==10)return showMsg(msgId,'Enter a valid 10-digit phone number.','err');
+  const btn=document.getElementById(btnId);btn.disabled=true;btn.textContent='Getting...';
   const data=await api('POST','/api/otp/send',{phone});
   if(!data.success){btn.disabled=false;btn.textContent='Get OTP';return showMsg(msgId,data.message,'err');}
-  document.getElementById(grpId).style.display='block';
-  btn.textContent='Done ✓';
-  // Show OTP in beautiful digit boxes
+  document.getElementById(grpId).style.display='block';btn.textContent='Done ✓';
   const code=data.screenOtp||'';
-  const disp=document.getElementById(dispId);
-  disp.style.display='block';
+  const disp=document.getElementById(dispId);disp.style.display='block';
   disp.innerHTML='<div class="otp-display"><div class="otp-display-label">🔐 Your Verification Code</div><div class="otp-digits">'+
-    code.split('').map(d=>'<div class="otp-digit">'+d+'</div>').join('')+
-    '</div><div class="otp-display-note">Valid for 5 minutes · Do not share</div></div>';
-  // Auto fill
+    code.split('').map(d=>'<div class="otp-digit">'+d+'</div>').join('')+'</div><div class="otp-display-note">Valid 5 minutes · Do not share</div></div>';
   const otpInput=document.getElementById(flow==='signup'?'sOTP':'fpOTP');
   if(otpInput){otpInput.value=code;onOTPInput(flow);}
   startOTPTimer(flow==='signup'?'s':'fp');
   otpVerified[flow]=false;
 }
 
-async function onOTPInput(flow) {
-  const otpId=flow==='signup'?'sOTP':'fpOTP', phoneId=flow==='signup'?'sPhone':'fpPhone';
+async function onOTPInput(flow){
+  const otpId=flow==='signup'?'sOTP':'fpOTP',phoneId=flow==='signup'?'sPhone':'fpPhone';
   const otp=document.getElementById(otpId).value.trim();
-  if(otp.length!==6) return;
+  if(otp.length!==6)return;
   const phone=getPhone(phoneId);
   const data=await api('POST','/api/otp/verify',{phone,otp});
   if(data.success){
@@ -859,120 +855,118 @@ async function onOTPInput(flow) {
   }
 }
 
-// ══════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════
 //  AUTH TABS
-// ══════════════════════════════════════════════════════
-function aTab(t) {
+// ════════════════════════════════════════════════════
+function aTab(t){
   ['login','signup','forgot'].forEach(x=>{
-    document.getElementById('f'+x.charAt(0).toUpperCase()+x.slice(1)).style.display=x===t?'block':'none';
+    const key=x.charAt(0).toUpperCase()+x.slice(1);
+    document.getElementById('f'+key).style.display=x===t?'block':'none';
   });
   document.querySelectorAll('.auth-tab').forEach((btn,i)=>{
     btn.classList.toggle('active',(i===0&&t==='login')||(i===1&&(t==='signup'||t==='forgot')));
   });
 }
 
-// ══════════════════════════════════════════════════════
-//  LOGIN / SIGNUP / RESET
-// ══════════════════════════════════════════════════════
-async function doLogin() {
-  const phone=getPhone('lPhone'), pass=document.getElementById('lPass').value;
-  if(phone.length!==10) return showMsg('lMsg','Enter a valid 10-digit phone number.','err');
-  if(!pass) return showMsg('lMsg','Enter your password.','err');
+// ════════════════════════════════════════════════════
+//  AUTH ACTIONS
+// ════════════════════════════════════════════════════
+async function doLogin(){
+  const phone=getPhone('lPhone'),pass=document.getElementById('lPass').value;
+  if(phone.length!==10)return showMsg('lMsg','Enter a valid 10-digit phone number.','err');
+  if(!pass)return showMsg('lMsg','Enter your password.','err');
   setBtn('lBtn',true,'Logging in...');
   const data=await api('POST','/api/auth/login',{phone,password:pass});
   setBtn('lBtn',false,'Login');
-  if(!data.success) return showMsg('lMsg',data.message,'err');
+  if(!data.success)return showMsg('lMsg',data.message,'err');
   saveSession({type:'member',...data.member});
   loadMemberView();
 }
 
-async function doSignup() {
-  const name=document.getElementById('sName').value.trim(), phone=getPhone('sPhone');
-  const pw=document.getElementById('sPw').value, pw2=document.getElementById('sPw2').value;
-  if(!name) return showMsg('sMsg','Enter your full name.','err');
-  if(phone.length!==10) return showMsg('sMsg','Enter a valid phone number.','err');
-  if(!otpVerified.signup) return showMsg('sMsg','Please verify OTP first.','err');
-  if(!pw||pw.length<6) return showMsg('sMsg','Password must be at least 6 characters.','err');
-  if(pw!==pw2) return showMsg('sMsg','Passwords do not match.','err');
+async function doSignup(){
+  const name=document.getElementById('sName').value.trim(),phone=getPhone('sPhone');
+  const pw=document.getElementById('sPw').value,pw2=document.getElementById('sPw2').value;
+  if(!name)return showMsg('sMsg','Enter your full name.','err');
+  if(phone.length!==10)return showMsg('sMsg','Enter a valid phone number.','err');
+  if(!otpVerified.signup)return showMsg('sMsg','Please verify OTP first.','err');
+  if(!pw||pw.length<6)return showMsg('sMsg','Password must be at least 6 characters.','err');
+  if(pw!==pw2)return showMsg('sMsg','Passwords do not match.','err');
   setBtn('sBtn',true,'Creating account...');
   const data=await api('POST','/api/auth/signup',{name,phone,password:pw});
   setBtn('sBtn',false,'Create Account');
-  if(!data.success) return showMsg('sMsg',data.message,'err');
+  if(!data.success)return showMsg('sMsg',data.message,'err');
   showMsg('sMsg','Account created! Logging you in...','ok');
   setTimeout(()=>{saveSession({type:'member',...data.member});loadMemberView();},1200);
 }
 
-async function doReset() {
-  const phone=getPhone('fpPhone'), pw=document.getElementById('fpPw').value;
-  if(!otpVerified.forgot) return showMsg('fpMsg','Please verify OTP first.','err');
-  if(!pw||pw.length<6) return showMsg('fpMsg','Password must be at least 6 characters.','err');
+async function doReset(){
+  const phone=getPhone('fpPhone'),pw=document.getElementById('fpPw').value;
+  if(!otpVerified.forgot)return showMsg('fpMsg','Please verify OTP first.','err');
+  if(!pw||pw.length<6)return showMsg('fpMsg','Password must be at least 6 characters.','err');
   setBtn('fpBtn',true,'Resetting...');
   const data=await api('POST','/api/auth/reset-password',{phone,newPassword:pw});
   setBtn('fpBtn',false,'Reset Password');
   showMsg('fpMsg',data.message,data.success?'ok':'err');
-  if(data.success) setTimeout(()=>aTab('login'),2000);
+  if(data.success)setTimeout(()=>aTab('login'),2000);
 }
 
-async function doAdminLogin() {
+async function doAdminLogin(){
   const pw=document.getElementById('aPw').value;
-  if(!pw) return showMsg('aMMsg','Enter admin password.','err');
+  if(!pw)return showMsg('aMMsg','Enter admin password.','err');
   const data=await api('POST','/api/auth/admin',{password:pw});
-  if(!data.success) return showMsg('aMMsg',data.message,'err');
+  if(!data.success)return showMsg('aMMsg',data.message,'err');
   closeMod('adminMod');
-  saveSession({type:'admin', adminPassword:pw});
+  saveSession({type:'admin',adminPassword:pw});
   loadAdminView();
 }
 
-function doLogout() {
-  if(window._liveInterval) clearInterval(window._liveInterval);
-  if(window._pollInterval) clearInterval(window._pollInterval);
+function doLogout(){
+  if(window._liveInterval)clearInterval(window._liveInterval);
+  if(window._pollInterval)clearInterval(window._pollInterval);
   saveSession(null);
-  showView('auth');
-  aTab('login');
+  showView('auth');aTab('login');
   document.getElementById('pushBell').style.display='none';
 }
 
-// ══════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════
 //  ADMIN VIEW
-// ══════════════════════════════════════════════════════
-function aPage(p) {
+// ════════════════════════════════════════════════════
+function aPage(p){
   closeSbOnMobile();
   document.querySelectorAll('#adminView .page').forEach(x=>x.classList.remove('on'));
   document.querySelectorAll('#aSb .ni').forEach(x=>x.classList.remove('on'));
-  document.getElementById('ap-'+p).classList.add('on');
+  const page=document.getElementById('ap-'+p);
   const nav=document.querySelector('#aSb .ni[data-page="'+p+'"]');
-  if(nav) nav.classList.add('on');
-  if(p==='members') renderMembers();
-  if(p==='payments') renderPayments();
-  if(p==='notifs') loadAdminNotifs();
-  if(p==='announce') loadAnnouncements();
-  if(p==='live') loadAdminLiveState();
-  if(p==='pending') renderPending();
+  if(page)page.classList.add('on');
+  if(nav)nav.classList.add('on');
+  if(p==='members')renderMembers();
+  if(p==='payments')renderPayments();
+  if(p==='notifs')loadAdminNotifs();
+  if(p==='announce')loadAnnouncements();
+  if(p==='live')loadAdminLiveState();
+  if(p==='pending')renderPending();
 }
 
-async function loadAdminView() {
+async function loadAdminView(){
   showView('admin');
   await loadAdminData();
-  checkDBStatus();
   document.getElementById('pushBell').style.display='flex';
   updateBellState();
   startPollInterval();
 }
 
-async function loadAdminData() {
-  const today=new Date(); today.setHours(0,0,0,0);
+async function loadAdminData(){
+  const today=new Date();today.setHours(0,0,0,0);
   document.getElementById('dashDate').textContent=today.toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
-  const [members, payments] = await Promise.all([api('GET','/api/members'), api('GET','/api/payments')]);
+  const[members,payments]=await Promise.all([api('GET','/api/members'),api('GET','/api/payments')]);
   allMembers=Array.isArray(members)?members:[];
   allPayments=Array.isArray(payments)?payments:[];
-  renderDash();
-  renderPending();
-  // Check expiry
+  renderDash();renderPending();
   api('POST','/api/notifications/check-expiry');
   loadAdminNotifs();
 }
 
-function renderDash() {
+function renderDash(){
   const active=allMembers.filter(m=>getStatus(m)==='active').length;
   const expiring=allMembers.filter(m=>getStatus(m)==='expiring').length;
   const expired=allMembers.filter(m=>getStatus(m)==='expired').length;
@@ -982,70 +976,52 @@ function renderDash() {
     '<div class="sc gn"><div class="ico2">✅</div><div class="val">'+active+'</div><div class="lbl">Active</div></div>'+
     '<div class="sc yw"><div class="ico2">⚠️</div><div class="val">'+expiring+'</div><div class="lbl">Expiring ≤7d</div></div>'+
     '<div class="sc rd"><div class="ico2">❌</div><div class="val">'+expired+'</div><div class="lbl">Expired</div></div>'+
-    '<div class="sc or"><div class="ico2">💰</div><div class="val">₹'+totalRev.toLocaleString('en-IN')+'</div><div class="lbl">Total Revenue</div></div>';
-
-  // Expiring soon table
+    '<div class="sc or"><div class="ico2">💰</div><div class="val">₹'+totalRev.toLocaleString('en-IN')+'</div><div class="lbl">Revenue</div></div>';
   const exp=allMembers.filter(m=>getStatus(m)==='expiring').sort((a,b)=>getDaysLeft(a)-getDaysLeft(b));
   document.getElementById('expBody').innerHTML=exp.length
-    ? exp.map(m=>'<tr><td>'+m.name+'</td><td>'+m.phone+'</td><td><span class="badge expiring">'+getDaysLeft(m)+' days</span></td><td><button class="ib" onclick="openRenew(\''+m.id+'\',\''+m.name+'\')">🔄 Renew</button></td></tr>').join('')
-    : '<tr><td colspan="4" class="empty">No members expiring soon ✅</td></tr>';
-
-  // Recent payments
+    ?exp.map(m=>'<tr><td>'+m.name+'</td><td>'+m.phone+'</td><td><span class="badge expiring">'+getDaysLeft(m)+' days</span></td><td><button class="ib" onclick="openRenew(\''+m.id+'\',\''+m.name+'\')">🔄 Renew</button></td></tr>').join('')
+    :'<tr><td colspan="4" class="empty">No members expiring soon ✅</td></tr>';
   const rec=allPayments.slice(0,5);
   document.getElementById('recPayBody').innerHTML=rec.length
-    ? rec.map(p=>'<tr><td>'+p.memberName+'</td><td>'+PLAN_LABEL[p.plan]+'</td><td>₹'+p.amount+'</td><td>'+fmtDate(p.date)+'</td><td><span class="badge '+p.status+'">'+p.status+'</span></td></tr>').join('')
-    : '<tr><td colspan="5" class="empty">No payments yet</td></tr>';
-
-  // Expiry badge
-  const expBadge=document.getElementById('expBadge');
-  expBadge.textContent=expiring; expBadge.style.display=expiring>0?'inline':'none';
-
-  // Pending badge
-  const pb=document.getElementById('pendBadge');
-  pb.textContent=pending; pb.style.display=pending>0?'inline':'none';
+    ?rec.map(p=>'<tr><td>'+p.memberName+'</td><td>'+(PLAN_LABEL[p.plan]||p.plan)+'</td><td>₹'+p.amount+'</td><td>'+fmtDate(p.date)+'</td><td><span class="badge '+p.status+'">'+p.status+'</span></td></tr>').join('')
+    :'<tr><td colspan="5" class="empty">No payments yet</td></tr>';
+  const expBadge=document.getElementById('expBadge');expBadge.textContent=expiring;expBadge.style.display=expiring>0?'inline':'none';
+  const pb=document.getElementById('pendBadge');pb.textContent=pending;pb.style.display=pending>0?'inline':'none';
 }
 
-function renderMembers() {
+function renderMembers(){
   const q=(document.getElementById('mSrch')?.value||'').toLowerCase();
-  const filtered=allMembers.filter(m=>
-    m.name.toLowerCase().includes(q)||m.phone.includes(q)
-  ).filter(m=>!['no-plan','pending-payment'].includes(m.memberStatus)||m.plan);
+  const filtered=allMembers.filter(m=>m.name.toLowerCase().includes(q)||m.phone.includes(q));
   document.getElementById('mBody').innerHTML=filtered.length
-    ? filtered.map(m=>{
-        const st=getStatus(m), dl=getDaysLeft(m);
-        return '<tr><td><strong>'+m.name+'</strong></td><td>'+m.phone+'</td><td>'+(m.plan?PLAN_LABEL[m.plan]:'—')+'</td><td>'+fmtDate(m.admissionDate)+'</td><td>'+(m.admissionDate&&m.plan?fmtDate(getExpiry(m).toISOString().split('T')[0]):'—')+'</td>'+
-          '<td><span class="badge '+st+'">'+st+(dl>0&&dl<=7?' ('+dl+'d)':'')+'</span></td>'+
-          '<td><span class="badge '+m.paymentStatus+'">'+m.paymentStatus+'</span></td>'+
-          '<td><div class="abtn"><button class="ib" onclick="openEdit(\''+m.id+'\')">✏️</button><button class="ib" onclick="openRenew(\''+m.id+'\',\''+m.name+'\')">🔄</button><button class="ib del" onclick="openDelete(\''+m.id+'\',\''+m.name+'\')">🗑️</button></div></td></tr>';
-      }).join('')
-    : '<tr><td colspan="8" class="empty">No members found.</td></tr>';
+    ?filtered.map(m=>{const st=getStatus(m),dl=getDaysLeft(m);
+      return'<tr><td><strong>'+m.name+'</strong></td><td>'+m.phone+'</td><td>'+(m.plan?PLAN_LABEL[m.plan]:'—')+'</td><td>'+fmtDate(m.admissionDate)+'</td><td>'+(m.admissionDate&&m.plan?fmtDate(getExpiry(m).toISOString().split('T')[0]):'—')+'</td>'+
+      '<td><span class="badge '+st+'">'+st+(dl>0&&dl<=7?' ('+dl+'d)':'')+'</span></td>'+
+      '<td><span class="badge '+(m.paymentStatus||'pending')+'">'+m.paymentStatus+'</span></td>'+
+      '<td><div class="abtn"><button class="ib" onclick="openEdit(\''+m.id+'\')">✏️</button><button class="ib" onclick="openRenew(\''+m.id+'\',\''+m.name+'\')">🔄</button><button class="ib del" onclick="openDelete(\''+m.id+'\',\''+m.name+'\')">🗑️</button></div></td></tr>';
+    }).join('')
+    :'<tr><td colspan="8" class="empty">No members found.</td></tr>';
 }
 
-function renderPending() {
+function renderPending(){
   const pending=allMembers.filter(m=>m.memberStatus==='no-plan'||m.memberStatus==='pending-payment');
   document.getElementById('pendingBody').innerHTML=pending.length
-    ? pending.map(m=>'<tr><td><strong>'+m.name+'</strong></td><td>'+m.phone+'</td><td>'+fmtDate(m.createdAt)+'</td>'+
-        '<td><button class="sb yw" onclick="openConfirmPay(\''+m.id+'\',\''+m.name+'\')">✅ Confirm Payment</button></td></tr>').join('')
-    : '<tr><td colspan="4" class="empty">No pending members ✅</td></tr>';
-  const pb=document.getElementById('pendBadge');
-  pb.textContent=pending.length; pb.style.display=pending.length>0?'inline':'none';
+    ?pending.map(m=>'<tr><td><strong>'+m.name+'</strong></td><td>'+m.phone+'</td><td>'+fmtDate(m.createdAt)+'</td>'+
+      '<td><button class="sb yw" onclick="openConfirmPay(\''+m.id+'\',\''+m.name+'\')">✅ Confirm Payment</button></td></tr>').join('')
+    :'<tr><td colspan="4" class="empty">No pending members ✅</td></tr>';
+  const pb=document.getElementById('pendBadge');pb.textContent=pending.length;pb.style.display=pending.length>0?'inline':'none';
 }
 
-function renderPayments() {
+function renderPayments(){
   const q=(document.getElementById('pSrch')?.value||'').toLowerCase();
   const filtered=allPayments.filter(p=>(p.memberName||'').toLowerCase().includes(q)||(p.phone||'').includes(q));
   document.getElementById('pBody').innerHTML=filtered.length
-    ? filtered.map(p=>'<tr><td>'+p.memberName+'</td><td>'+p.phone+'</td><td>'+(PLAN_LABEL[p.plan]||p.plan)+'</td><td>₹'+p.amount+'</td><td>'+fmtDate(p.date)+'</td><td><span class="badge '+p.status+'">'+p.status+'</span></td><td>'+(p.status!=='paid'?'<button class="ib grn" onclick="markPaid(\''+p.id+'\')">✓ Mark Paid</button>':'')+'</td></tr>').join('')
-    : '<tr><td colspan="7" class="empty">No payments found.</td></tr>';
+    ?filtered.map(p=>'<tr><td>'+p.memberName+'</td><td>'+p.phone+'</td><td>'+(PLAN_LABEL[p.plan]||p.plan)+'</td><td>₹'+p.amount+'</td><td>'+fmtDate(p.date)+'</td><td><span class="badge '+p.status+'">'+p.status+'</span></td><td>'+(p.status!=='paid'?'<button class="ib grn" onclick="markPaid(\''+p.id+'\')">✓ Mark Paid</button>':'')+'</td></tr>').join('')
+    :'<tr><td colspan="7" class="empty">No payments found.</td></tr>';
 }
 
-async function markPaid(id) {
-  await api('PUT','/api/payments/'+id+'/mark-paid');
-  loadAdminData();
-}
+async function markPaid(id){await api('PUT','/api/payments/'+id+'/mark-paid');loadAdminData();}
 
-// Add member
-async function addMember() {
+async function addMember(){
   const name=document.getElementById('am_name').value.trim();
   const phone=getPhone('am_phone');
   const plan=document.getElementById('am_plan').value;
@@ -1056,22 +1032,21 @@ async function addMember() {
   const pay=document.getElementById('am_pay').value;
   const pw=document.getElementById('am_pass').value;
   const pw2=document.getElementById('am_pass2').value;
-  if(!name) return showMsg('amMsg','Enter member name.','err');
-  if(phone.length!==10) return showMsg('amMsg','Enter a valid phone number.','err');
-  if(!plan||!date) return showMsg('amMsg','Select plan and admission date.','err');
-  if(!pw||pw.length<6) return showMsg('amMsg','Password must be at least 6 characters.','err');
-  if(pw!==pw2) return showMsg('amMsg','Passwords do not match.','err');
+  if(!name)return showMsg('amMsg','Enter member name.','err');
+  if(phone.length!==10)return showMsg('amMsg','Enter a valid phone number.','err');
+  if(!plan||!date)return showMsg('amMsg','Select plan and admission date.','err');
+  if(!pw||pw.length<6)return showMsg('amMsg','Password must be at least 6 characters.','err');
+  if(pw!==pw2)return showMsg('amMsg','Passwords do not match.','err');
   const data=await api('POST','/api/members',{name,phone,plan,admissionDate:date,gender,emergencyContact:emg,healthNotes:notes,paymentStatus:pay,password:pw});
-  showMsg('amMsg',data.success?'✅ Member added successfully!':data.message,data.success?'ok':'err');
+  showMsg('amMsg',data.success?'✅ Member added!':data.message,data.success?'ok':'err');
   if(data.success){
     ['am_name','am_phone','am_date','am_emg','am_notes','am_pass','am_pass2'].forEach(id=>document.getElementById(id).value='');
-    loadAdminData(); floatNotif('✅ Member Added',name+' registered.','ok');
+    loadAdminData();floatNotif('✅ Member Added',name+' registered.','ok');
   }
 }
 
-// Edit member
-function openEdit(id) {
-  const m=allMembers.find(x=>x.id===id); if(!m) return;
+function openEdit(id){
+  const m=allMembers.find(x=>x.id===id);if(!m)return;
   document.getElementById('em_id').value=m.id;
   document.getElementById('em_name').value=m.name;
   document.getElementById('em_phone').value=m.phone;
@@ -1080,106 +1055,86 @@ function openEdit(id) {
   document.getElementById('em_pay').value=m.paymentStatus||'pending';
   document.getElementById('editMod').classList.add('open');
 }
-async function saveEdit() {
+async function saveEdit(){
   const id=document.getElementById('em_id').value;
-  const data=await api('PUT','/api/members/'+id,{
-    name:document.getElementById('em_name').value,
-    phone:document.getElementById('em_phone').value,
-    plan:document.getElementById('em_plan').value,
-    admissionDate:document.getElementById('em_date').value,
-    paymentStatus:document.getElementById('em_pay').value
-  });
+  const data=await api('PUT','/api/members/'+id,{name:document.getElementById('em_name').value,phone:document.getElementById('em_phone').value,plan:document.getElementById('em_plan').value,admissionDate:document.getElementById('em_date').value,paymentStatus:document.getElementById('em_pay').value});
   closeMod('editMod');
   if(data.success){loadAdminData();floatNotif('✏️ Updated',data.member?.name+' saved.','info');}
   else floatNotif('❌ Error',data.message,'danger');
 }
 
-// Renew
-function openRenew(id,name) {
-  renewTarget=id;
-  document.getElementById('renewName').textContent=name;
-  document.getElementById('rDate').value=new Date().toISOString().split('T')[0];
-  document.getElementById('renewMod').classList.add('open');
-}
-async function confirmRenew() {
-  const data=await api('POST','/api/members/'+renewTarget+'/renew',{
-    plan:document.getElementById('rPlan').value,
-    paymentDate:document.getElementById('rDate').value,
-    paymentStatus:document.getElementById('rStatus').value
-  });
+function openRenew(id,name){renewTarget=id;document.getElementById('renewName').textContent=name;document.getElementById('rDate').value=new Date().toISOString().split('T')[0];document.getElementById('renewMod').classList.add('open');}
+async function confirmRenew(){
+  const data=await api('POST','/api/members/'+renewTarget+'/renew',{plan:document.getElementById('rPlan').value,paymentDate:document.getElementById('rDate').value,paymentStatus:document.getElementById('rStatus').value});
   closeMod('renewMod');
-  if(data.success){loadAdminData();floatNotif('🔄 Renewed',data.member?.name+' — '+PLAN_LABEL[data.member?.plan],'ok');}
+  if(data.success){loadAdminData();floatNotif('🔄 Renewed',data.member?.name+' renewed.','ok');}
   else floatNotif('❌ Error',data.message,'danger');
 }
 
-// Confirm payment
-function openConfirmPay(id,name) {
-  document.getElementById('cpMemberId').value=id;
-  document.getElementById('cpMemberName').textContent=name;
-  document.getElementById('cpPayDate').value=new Date().toISOString().split('T')[0];
-  document.getElementById('confirmPayMod').classList.add('open');
-}
-async function doConfirmPayment() {
+function openConfirmPay(id,name){document.getElementById('cpMemberId').value=id;document.getElementById('cpMemberName').textContent=name;document.getElementById('cpPayDate').value=new Date().toISOString().split('T')[0];document.getElementById('confirmPayMod').classList.add('open');}
+async function doConfirmPayment(){
   const id=document.getElementById('cpMemberId').value;
   const plan=document.getElementById('cpPlan').value;
   const payDate=document.getElementById('cpPayDate').value;
   const data=await api('POST','/api/members/'+id+'/confirm-payment',{plan,paymentDate:payDate,adminPassword:session?.adminPassword||''});
   closeMod('confirmPayMod');
-  if(data.success){loadAdminData();floatNotif('✅ Activated!',data.member?.name+' membership is now active.','ok');}
+  if(data.success){loadAdminData();floatNotif('✅ Activated!',data.member?.name+' membership active.','ok');}
   else floatNotif('❌ Error',data.message,'danger');
 }
 
-// Delete
-function openDelete(id,name) {
-  deleteTarget=id;
-  document.getElementById('delMemberName').textContent=name;
-  document.getElementById('delMod').classList.add('open');
-}
-async function confirmDelete() {
+function openDelete(id,name){deleteTarget=id;document.getElementById('delMemberName').textContent=name;document.getElementById('delMod').classList.add('open');}
+async function confirmDelete(){
   setBtn('delConfirmBtn',true,'Removing...');
   await api('DELETE','/api/members/'+deleteTarget);
-  closeMod('delMod');
-  setBtn('delConfirmBtn',false,'🗑️ Yes, Remove');
-  loadAdminData();
-  floatNotif('🗑️ Deleted','Member removed from database.','info');
+  closeMod('delMod');setBtn('delConfirmBtn',false,'🗑️ Remove');
+  loadAdminData();floatNotif('🗑️ Deleted','Member removed.','info');
 }
 
-// Admin notifications
-async function loadAdminNotifs() {
+async function loadAdminNotifs(){
   const notifs=await api('GET','/api/notifications?adminOnly=true');
-  const list=document.getElementById('aNotifList');
-  if(!list) return;
+  const list=document.getElementById('aNotifList');if(!list)return;
   const unread=Array.isArray(notifs)?notifs.filter(n=>!n.read).length:0;
-  const nb=document.getElementById('aNBadge'); nb.textContent=unread; nb.style.display=unread>0?'inline':'none';
+  const nb=document.getElementById('aNBadge');nb.textContent=unread;nb.style.display=unread>0?'inline':'none';
   list.innerHTML=Array.isArray(notifs)&&notifs.length
-    ? notifs.map(n=>'<div class="nit '+(n.read?'':'unread')+'" onclick="markNotifRead(\''+n.id+'\')">'+'<div class="nico '+n.type+'">'+n.icon+'</div>'+'<div class="nbody"><div class="ntitle">'+n.title+'</div><div class="ndesc">'+n.desc+'</div><div class="ntime">'+new Date(n.time).toLocaleString('en-IN')+'</div></div></div>').join('')
-    : '<div class="empty">No notifications yet.</div>';
+    ?notifs.map(n=>'<div class="nit '+(n.read?'':'unread')+'" onclick="markNotifRead(\''+n.id+'\')"><div class="nico '+n.type+'">'+n.icon+'</div><div class="nbody"><div class="ntitle">'+n.title+'</div><div class="ndesc">'+n.desc+'</div><div class="ntime">'+new Date(n.time).toLocaleString('en-IN')+'</div></div></div>').join('')
+    :'<div class="empty">No notifications yet.</div>';
 }
 
-async function markNotifRead(id) {
-  await api('PUT','/api/notifications/'+id+'/read');
-  loadAdminNotifs();
+async function markNotifRead(id){await api('PUT','/api/notifications/'+id+'/read');loadAdminNotifs();}
+async function clearAdminNotifs(){await api('DELETE','/api/notifications');loadAdminNotifs();}
+
+// ── LIVE (ADMIN) ──
+let currentPlatform='youtube';
+const platformHelp={
+  youtube:'<strong style="color:var(--tx)">YouTube Live:</strong><br>1. Open YouTube → tap + → Go Live<br>2. Start live → copy the URL from share<br>3. Paste above → Go Live Now',
+  instagram:'<strong style="color:var(--tx)">Instagram Live:</strong><br>1. Open Instagram → tap + → Live<br>2. Start your session<br>3. Paste your profile or story link<br>⚠️ Instagram cannot embed — members see a "Open in Instagram" button',
+  facebook:'<strong style="color:var(--tx)">Facebook Live:</strong><br>1. Open Facebook → tap Live<br>2. Start broadcast → copy the video link<br>3. Paste above → Go Live Now'
+};
+const platformPlaceholder={
+  youtube:'https://youtube.com/live/... or youtu.be/...',
+  instagram:'https://www.instagram.com/gymlover_govindshukla70 (profile or live link)',
+  facebook:'https://www.facebook.com/... live video link'
+};
+
+function selectPlatform(p){
+  currentPlatform=p;
+  document.querySelectorAll('.plat-btn').forEach(b=>b.classList.remove('active-plat'));
+  document.getElementById('plat-'+p).classList.add('active-plat');
+  document.getElementById('platformHelp').innerHTML=platformHelp[p]||'';
+  document.getElementById('aLiveUrl').placeholder=platformPlaceholder[p]||'';
+  document.getElementById('liveUrlLabel').textContent=(p.charAt(0).toUpperCase()+p.slice(1))+' Live URL *';
 }
 
-async function clearAdminNotifs() {
-  await api('DELETE','/api/notifications');
-  loadAdminNotifs();
-}
-
-// Live
-function getLiveEmbedUrl(url) {
-  if(!url) return '';
-  // YouTube
+function getLiveEmbedUrl(url){
+  if(!url)return null;
   const yt=url.match(/(?:youtube\.com\/live\/|youtu\.be\/|youtube\.com\/watch\?v=)([a-zA-Z0-9_-]{11})/);
-  if(yt) return 'https://www.youtube.com/embed/'+yt[1]+'?autoplay=1&rel=0';
-  // Facebook
-  if(url.includes('facebook.com')||url.includes('fb.watch')) return 'https://www.facebook.com/plugins/video.php?href='+encodeURIComponent(url)+'&autoplay=1&show_text=0';
-  // Instagram — cannot be embedded, return null signal
-  if(url.includes('instagram.com')) return null;
+  if(yt)return'https://www.youtube.com/embed/'+yt[1]+'?autoplay=1&rel=0';
+  if(url.includes('facebook.com')||url.includes('fb.watch'))return'https://www.facebook.com/plugins/video.php?href='+encodeURIComponent(url)+'&autoplay=1&show_text=0';
+  if(url.includes('instagram.com'))return null;
   return url;
 }
 
-async function adminGoLive() {
+async function adminGoLive(){
   const url=document.getElementById('aLiveUrl').value.trim();
   const title=document.getElementById('aLiveTitle').value.trim()||'Gym Live Session';
   if(!url){floatNotif('❌ No Link','Paste your live URL first.','danger');return;}
@@ -1188,37 +1143,34 @@ async function adminGoLive() {
   document.getElementById('aLiveOn').style.display='block';
   document.getElementById('aLiveTitle2').textContent=title;
   document.getElementById('aLiveUrlShow').textContent=url;
-  const embedUrl = getLiveEmbedUrl(url);
-  const igFallback = document.getElementById('igLiveFallback');
-  if(embedUrl===null) {
-    // Instagram — show link fallback
-    document.getElementById('aLiveFrame').style.display='none';
-    igFallback.style.display='block';
-    document.getElementById('igLiveLink').textContent=url;
-    document.getElementById('igLiveLink').href=url;
-    floatNotif('📸 Instagram Live started!','Members will get a direct link to open in Instagram.','ok');
-  } else {
-    document.getElementById('aLiveFrame').style.display='block';
-    igFallback.style.display='none';
+  const embedUrl=getLiveEmbedUrl(url);
+  const ytFbEmbed=document.getElementById('aYtFbEmbed');
+  const igCard=document.getElementById('aIgLiveCard');
+  if(embedUrl===null){
+    ytFbEmbed.style.display='none';igCard.style.display='block';
+    document.getElementById('aIgLiveLink').textContent=url;
+    document.getElementById('aIgLiveLink').href=url;
+    floatNotif('📸 Instagram Live!','Members will see an "Open in Instagram" button.','ok');
+  }else{
+    ytFbEmbed.style.display='block';igCard.style.display='none';
     document.getElementById('aLiveFrame').src=embedUrl;
-    floatNotif('🔴 You are LIVE!','Members and website visitors can watch now.','ok');
+    floatNotif('🔴 You are LIVE!','Everyone can watch now.','ok');
   }
   addChatMsg('aChatMsgs','BrothersGym 🏋️','🔴 Stream started! 💪');
 }
 
-async function adminStopLive() {
-  document.getElementById('aLiveFrame').src='';
+async function adminStopLive(){
+  const frame=document.getElementById('aLiveFrame');if(frame)frame.src='';
   document.getElementById('aLiveOff').style.display='block';
   document.getElementById('aLiveOn').style.display='none';
-  document.getElementById('aLiveUrl').value='';
-  document.getElementById('aLiveTitle').value='';
+  document.getElementById('aLiveUrl').value='';document.getElementById('aLiveTitle').value='';
   await api('POST','/api/live/stop');
   floatNotif('⏹ Stopped','Live stream ended.','info');
   addChatMsg('aChatMsgs','BrothersGym 🏋️','Stream ended. Thanks! 💪');
 }
 
-async function loadAdminLiveState() {
-  initLivePlatform();
+async function loadAdminLiveState(){
+  selectPlatform('youtube');
   const data=await api('GET','/api/live/status');
   if(data&&data.live){
     document.getElementById('aLiveOff').style.display='none';
@@ -1226,92 +1178,81 @@ async function loadAdminLiveState() {
     document.getElementById('aLiveTitle2').textContent=data.title||'';
     document.getElementById('aLiveUrlShow').textContent=data.url||'';
     const embedUrl=getLiveEmbedUrl(data.url||'');
-    if(embedUrl===null){
-      document.getElementById('aLiveFrame').style.display='none';
-      document.getElementById('igLiveFallback').style.display='block';
-      document.getElementById('igLiveLink').textContent=data.url;
-      document.getElementById('igLiveLink').href=data.url;
-    } else {
-      document.getElementById('aLiveFrame').src=embedUrl;
-    }
+    const ytFbEmbed=document.getElementById('aYtFbEmbed');
+    const igCard=document.getElementById('aIgLiveCard');
+    if(embedUrl===null){ytFbEmbed.style.display='none';igCard.style.display='block';document.getElementById('aIgLiveLink').href=data.url;document.getElementById('aIgLiveLink').textContent=data.url;}
+    else{ytFbEmbed.style.display='block';igCard.style.display='none';document.getElementById('aLiveFrame').src=embedUrl;}
   }
 }
 
-function addChatMsg(containerId,name,txt) {
-  const msgs=document.getElementById(containerId); if(!msgs) return;
-  const av=['🏋️','💪','🔥','⚡','👊','🎯','🚀','🙌'];
+function addChatMsg(containerId,name,txt){
+  const msgs=document.getElementById(containerId);if(!msgs)return;
+  const av=['🏋️','💪','🔥','⚡','👊'];
   const div=document.createElement('div');
-  div.style.cssText='display:flex;align-items:flex-start;gap:8px;';
-  div.innerHTML='<span style="font-size:16px;flex-shrink:0">'+av[Math.floor(Math.random()*av.length)]+'</span><div><span style="display:block;font-size:11px;font-weight:700;color:var(--p);margin-bottom:2px;">'+name+'</span><span style="font-size:13px;color:var(--tx);line-height:1.5;">'+txt+'</span></div>';
-  msgs.appendChild(div); msgs.scrollTop=msgs.scrollHeight;
-  while(msgs.children.length>60) msgs.removeChild(msgs.firstChild);
+  div.style.cssText='display:flex;align-items:flex-start;gap:7px;';
+  div.innerHTML='<span style="font-size:15px;flex-shrink:0">'+av[Math.floor(Math.random()*av.length)]+'</span><div><span style="display:block;font-size:10px;font-weight:700;color:var(--p);margin-bottom:1px;">'+name+'</span><span style="font-size:12px;color:var(--tx);line-height:1.4;">'+txt+'</span></div>';
+  msgs.appendChild(div);msgs.scrollTop=msgs.scrollHeight;
+  while(msgs.children.length>60)msgs.removeChild(msgs.firstChild);
 }
 function sendAChat(){const i=document.getElementById('aChatIn');const v=i.value.trim();if(!v)return;addChatMsg('aChatMsgs','Admin 👑',v);i.value='';}
 
-// Announcements
-async function loadAnnouncements() {
-  const data=await api('GET','/api/announcements');
-  if(!Array.isArray(data)) return;
+async function loadAnnouncements(){
+  const data=await api('GET','/api/announcements');if(!Array.isArray(data))return;
   const adminList=document.getElementById('annList');
-  if(adminList) adminList.innerHTML=data.length?data.map(a=>'<div class="ann-card"><div class="ann-title-row">📢 '+a.title+' <button class="ib del" style="margin-left:auto;" onclick="deleteAnn(\''+a.id+'\')">🗑</button></div><div class="ann-body">'+a.body+'</div><div class="ann-time">'+fmtDate(a.createdAt)+'</div></div>').join(''):'<div class="empty">No announcements yet. Write your first one!</div>';
+  if(adminList)adminList.innerHTML=data.length?data.map(a=>'<div class="ann-card"><div class="ann-title-row">📢 '+a.title+' <button class="ib del" style="margin-left:auto;font-size:12px;" onclick="deleteAnn(\''+a.id+'\')">🗑</button></div><div class="ann-body">'+a.body+'</div><div class="ann-time">'+fmtDate(a.createdAt)+'</div></div>').join(''):'<div class="empty">No announcements yet.</div>';
   const mCard=document.getElementById('mAnnCard');
-  if(mCard) mCard.innerHTML=data.length?data.map(a=>'<div class="ann-card"><div class="ann-title-row">📢 <strong>'+a.title+'</strong></div><div class="ann-body">'+a.body+'</div><div class="ann-time">'+fmtDate(a.createdAt)+'</div></div>').join(''):'<div class="empty">No announcements from the gym yet.</div>';
-  const mb=document.getElementById('mAnnBadge');
-  if(mb){mb.textContent=data.length;mb.style.display=data.length?'inline':'none';}
+  if(mCard)mCard.innerHTML=data.length?data.map(a=>'<div class="ann-card"><div class="ann-title-row">📢 <strong>'+a.title+'</strong></div><div class="ann-body">'+a.body+'</div><div class="ann-time">'+fmtDate(a.createdAt)+'</div></div>').join(''):'<div class="empty">No announcements from gym yet.</div>';
+  const mb=document.getElementById('mAnnBadge');if(mb){mb.textContent=data.length;mb.style.display=data.length?'inline':'none';}
 }
 
-async function postAnnouncement() {
+async function postAnnouncement(){
   const title=document.getElementById('ann_title').value.trim();
   const body=document.getElementById('ann_body').value.trim();
-  if(!title) return showMsg('annMsg','Enter a title.','err');
-  if(!body) return showMsg('annMsg','Write the announcement message.','err');
-  const pw=prompt('Enter admin password to confirm:');
-  if(!pw) return;
+  if(!title)return showMsg('annMsg','Enter a title.','err');
+  if(!body)return showMsg('annMsg','Write the message.','err');
+  const pw=prompt('Enter admin password to confirm:');if(!pw)return;
   const data=await api('POST','/api/announcements',{title,body,adminPassword:pw});
   showMsg('annMsg',data.success?'✅ Sent to all members!':data.message,data.success?'ok':'err');
   if(data.success){document.getElementById('ann_title').value='';document.getElementById('ann_body').value='';loadAnnouncements();floatNotif('📢 Announced!',title,'ok');}
 }
 
-async function deleteAnn(id) {
-  if(!confirm('Delete this announcement?')) return;
-  const pw=prompt('Admin password:'); if(!pw) return;
+async function deleteAnn(id){
+  if(!confirm('Delete this announcement?'))return;
+  const pw=prompt('Admin password:');if(!pw)return;
   const data=await api('DELETE','/api/announcements/'+id,{adminPassword:pw});
   if(data.success){loadAnnouncements();floatNotif('🗑 Deleted','','info');}
 }
 
-// ══════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════
 //  MEMBER VIEW
-// ══════════════════════════════════════════════════════
-function mPage(p) {
+// ════════════════════════════════════════════════════
+function mPage(p){
   closeSbOnMobile();
   document.querySelectorAll('#memberView .page').forEach(x=>x.classList.remove('on'));
   document.querySelectorAll('#mSb .ni').forEach(x=>x.classList.remove('on'));
-  document.getElementById('mp-'+p).classList.add('on');
+  const page=document.getElementById('mp-'+p);
   const nav=document.querySelector('#mSb .ni[data-page="'+p+'"]');
-  if(nav) nav.classList.add('on');
-  if(p==='membership') renderMembershipFull();
-  if(p==='payments') loadMemberPayments();
-  if(p==='live') checkLiveStatus();
-  if(p==='announce') loadAnnouncements();
-  if(p==='notifs') loadMemberNotifs();
+  if(page)page.classList.add('on');
+  if(nav)nav.classList.add('on');
+  if(p==='membership')renderMembershipFull();
+  if(p==='payments')loadMemberPayments();
+  if(p==='live')checkLiveStatus();
+  if(p==='announce')loadAnnouncements();
+  if(p==='notifs')loadMemberNotifs();
 }
 
-async function loadMemberView() {
+async function loadMemberView(){
   showView('member');
   const m=session;
   document.getElementById('mWelcome').textContent='Welcome, '+m.name.split(' ')[0]+'!';
   document.getElementById('mSUser').innerHTML='<strong>'+m.name+'</strong>'+m.phone;
-  // Refresh member data
   const members=await api('GET','/api/members');
-  if(Array.isArray(members)){
-    const me=members.find(x=>x.id===m.id);
-    if(me){Object.assign(session,me);saveSession(session);}
-  }
+  if(Array.isArray(members)){const me=members.find(x=>x.id===m.id);if(me){Object.assign(session,me);saveSession(session);}}
   renderMemberHome();
   checkLiveStatus();
-  if(window._liveInterval) clearInterval(window._liveInterval);
-  window._liveInterval=setInterval(checkLiveStatus,10000);
-  setTimeout(loadAnnouncements,800);
+  if(window._liveInterval)clearInterval(window._liveInterval);
+  window._liveInterval=setInterval(checkLiveStatus,12000);
+  setTimeout(loadAnnouncements,600);
   loadMemberNotifs();
   document.getElementById('pushBell').style.display='flex';
   updateBellState();
@@ -1319,12 +1260,12 @@ async function loadMemberView() {
   // Expiry alerts
   const d=getDaysLeft(session);
   if(d===-999){}
-  else if(d<=0) floatNotif('❌ Membership Expired!','Please contact gym to renew.','danger');
-  else if(d<=3) floatNotif('🚨 Expires in '+d+' day(s)!','Contact gym to renew now!','danger');
-  else if(d<=7) floatNotif('⚠️ '+d+' days left','Your membership is expiring soon.','warn');
+  else if(d<=0)floatNotif('❌ Membership Expired!','Please contact gym to renew.','danger');
+  else if(d<=2)floatNotif('🚨 Expires in '+d+' day(s)!','Contact gym now!','danger');
+  else if(d<=7)floatNotif('⚠️ '+d+' days left','Your membership is expiring soon.','warn');
 }
 
-function renderMemberHome() {
+function renderMemberHome(){
   const m=session;
   const initials=m.name.split(' ').map(w=>w[0]).join('').substr(0,2).toUpperCase();
   document.getElementById('mWelcomeSub').textContent=new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long'});
@@ -1332,56 +1273,39 @@ function renderMemberHome() {
   const stLabel=st==='active'?'Active':st==='no-plan'?'No Plan':st==='pending-payment'?'Pending Payment':'Inactive';
   document.getElementById('mProfileCard').innerHTML=
     '<div class="mprofile"><div class="mavatar">'+initials+'</div><div>'+
-    '<div style="font-size:12px;color:var(--mu);letter-spacing:2px;text-transform:uppercase;margin-bottom:4px;">ID: '+(m.id||'').slice(0,8).toUpperCase()+'</div>'+
+    '<div style="font-size:11px;color:var(--mu);letter-spacing:2px;text-transform:uppercase;margin-bottom:4px;">ID: '+(m.id||'').slice(0,8).toUpperCase()+'</div>'+
     '<div class="mname">'+m.name+'</div>'+
-    '<div style="margin-top:6px;display:flex;gap:8px;flex-wrap:wrap;">'+
-    (m.plan?'<span class="mpill">'+PLAN_LABEL[m.plan]+'</span>':'')+
-    '<span class="badge '+st+'">'+stLabel+'</span>'+
-    '</div></div></div>';
+    '<div style="margin-top:5px;display:flex;gap:7px;flex-wrap:wrap;">'+(m.plan?'<span class="mpill">'+PLAN_LABEL[m.plan]+'</span>':'')+
+    '<span class="badge '+st+'">'+stLabel+'</span></div></div></div>';
 
-  if(st==='no-plan'||st==='pending-payment') {
+  if(st==='no-plan'||st==='pending-payment'){
     renderGetMembership();
-  } else {
-    // Active member — check days left
-    const d = getDaysLeft(m);
-    // Show plan cards ONLY when expiry is within 2 days OR already expired
-    if(d <= 2) {
+  }else{
+    const d=getDaysLeft(m);
+    // Show plan cards ONLY when 2 or fewer days left or expired
+    if(d<=2){
       renderRenewalPrompt(d);
-    } else {
+    }else{
       renderMembershipCard();
     }
   }
 }
 
-function renderGetMembership() {
+function renderGetMembership(){
   const m=session;
   const isPending=m.memberStatus==='pending-payment';
-  let statusHtml='';
-  if(isPending) {
-    statusHtml='<div class="pending-box"><h3>⏳ Payment Pending</h3>'+
-      '<p>Your account is created! Your membership will be activated once the gym owner confirms your payment.</p>'+
-      '<p style="font-size:13px;color:var(--yw);margin-top:8px;">📞 Contact gym: <a href="tel:+919548611898" style="color:var(--p);font-weight:700;">+91 95486 11898</a> or <a href="https://wa.me/919548611898" target="_blank" style="color:var(--p);font-weight:700;">WhatsApp</a></p>'+
-      '</div>';
-  } else {
-    statusHtml='<div class="pending-box"><h3>🎯 Choose Your Plan</h3>'+
-      '<p>Welcome to Brothers Gym! Select a membership plan below, pay the gym owner, and they will activate your account.</p></div>';
-  }
-  document.getElementById('mStatusBox').innerHTML=statusHtml;
+  document.getElementById('mStatusBox').innerHTML=isPending
+    ?'<div class="pending-box"><h3>⏳ Payment Pending</h3><p>Your account is created! Your membership will be activated once the gym owner confirms your payment.</p><p style="font-size:12px;color:var(--yw);margin-top:6px;">📞 <a href="tel:+919548611898" style="color:var(--p);font-weight:700;">+91 95486 11898</a> or <a href="https://wa.me/919548611898" target="_blank" style="color:var(--p);font-weight:700;">WhatsApp</a></p></div>'
+    :'<div class="pending-box"><h3>🎯 Choose Your Plan</h3><p>Select a membership plan, pay the gym owner, and they will activate your account.</p></div>';
   document.getElementById('mMemCard').innerHTML=
-    '<div style="margin-bottom:14px;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--mu);">💪 Membership Plans</div>'+
-    '<div class="plan-grid">'+
-      renderPlanCard('monthly','Monthly','800','30','🗓️',false)+
-      renderPlanCard('quarterly','Quarterly','2100','90','⭐',true)+
-      renderPlanCard('annual','Annual','7500','365','🏆',false)+
-    '</div>';
+    '<div style="margin-bottom:12px;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--mu);">💪 Membership Plans</div>'+
+    '<div class="plan-grid">'+renderPlanCard('monthly','Monthly','800','30','🗓️',false)+renderPlanCard('quarterly','Quarterly','2100','90','⭐',true)+renderPlanCard('annual','Annual','7500','365','🏆',false)+'</div>';
   document.getElementById('mRecPay').innerHTML='';
 }
 
-function renderPlanCard(plan,name,price,days,icon,featured) {
-  const upiUrl='upi://pay?pa=9548611898-3@ybl&pn=BrotherGym&am='+price+'&cu=INR&tn='+name+'+Membership';
+function renderPlanCard(plan,name,price,days,icon,featured){
   const feats=['Full gym access','All equipment','Personal guidance','Locker access'];
-  return '<div class="plan-card'+(featured?' featured':'')+'">'+
-    (featured?'<div style="position:absolute;top:-1px;left:50%;transform:translateX(-50%);background:var(--p);color:white;font-size:10px;font-weight:800;padding:3px 14px;border-radius:0 0 8px 8px;letter-spacing:1px;">POPULAR</div>':'')+
+  return'<div class="plan-card'+(featured?' featured':'')+'">'+(featured?'<div style="position:absolute;top:-1px;left:50%;transform:translateX(-50%);background:var(--p);color:white;font-size:9px;font-weight:800;padding:3px 12px;border-radius:0 0 7px 7px;letter-spacing:1px;">POPULAR</div>':'')+
     '<div class="plan-name">'+icon+' '+name+'</div>'+
     '<div class="plan-price"><sup>₹</sup>'+price+'</div>'+
     '<div class="plan-period">per '+days+' days</div>'+
@@ -1390,332 +1314,265 @@ function renderPlanCard(plan,name,price,days,icon,featured) {
     '</div>';
 }
 
-function payForPlan(plan,amount,name) {
+function payForPlan(plan,amount,name){
   const upi='upi://pay?pa=9548611898-3@ybl&pn=BrotherGym&am='+amount+'&cu=INR&tn='+encodeURIComponent(name+' Membership');
-  if(/Android|iPhone|iPad/i.test(navigator.userAgent)) {
-    window.location.href=upi;
-    floatNotif('💳 Pay '+name,'Pay ₹'+amount+' then contact gym to activate.','info');
-  } else {
-    floatNotif('💳 Pay ₹'+amount,'Go to gym and pay cash/UPI, then ask owner to activate membership.','info');
-  }
+  if(/Android|iPhone|iPad/i.test(navigator.userAgent)){window.location.href=upi;}
+  floatNotif('💳 Pay ₹'+amount,'Pay at gym then ask owner to activate.','info');
 }
 
-function renderMembershipCard() {
+// ── Membership card (shows when >2 days left, normal active) ──
+function renderMembershipCard(){
   const m=session;
   if(!m.plan||!m.admissionDate){renderGetMembership();return;}
-  const d=getDaysLeft(m), exp=getExpiry(m);
+  const d=getDaysLeft(m),exp=getExpiry(m);
   const pct=Math.max(0,Math.min(100,(d/PLAN_DAYS[m.plan])*100));
   const cls=d<=3?'danger':d<=7?'warn':'';
   document.getElementById('mStatusBox').innerHTML='';
   document.getElementById('mMemCard').innerHTML=
     '<div class="memprog">'+
     '<div class="dleft '+cls+'">'+(d<=0?'EXPIRED':d)+'</div>'+
-    '<div style="font-size:13px;color:var(--mu);margin:4px 0 14px;">'+(d<=0?'Membership expired':'days remaining — expires '+fmtDate(exp.toISOString().split('T')[0]))+'</div>'+
-    '<div style="display:flex;justify-content:space-between;font-size:13px;color:var(--mu);margin-bottom:8px;"><span>Progress</span><span>'+Math.round(100-pct)+'% used</span></div>'+
+    '<div style="font-size:12px;color:var(--mu);margin:4px 0 12px;">'+(d<=0?'Expired':'days remaining — expires '+fmtDate(exp.toISOString().split('T')[0]))+'</div>'+
+    '<div style="display:flex;justify-content:space-between;font-size:12px;color:var(--mu);margin-bottom:7px;"><span>Progress</span><span>'+Math.round(100-pct)+'% used</span></div>'+
     '<div class="pbar"><div class="pfill '+cls+'" style="width:'+pct+'%"></div></div>'+
-    (d<=7?'<div style="margin-top:14px;padding:13px;background:rgba(255,60,0,.08);border:1px solid rgba(255,60,0,.2);border-radius:10px;font-size:14px;color:var(--p);">'+(d<=0?'❌ Expired. ':'⚠️ Expiring in '+d+' day(s)! ')+
-    '<a href="https://wa.me/919548611898?text=Hi, please renew my membership. ID: '+m.id.slice(0,8)+'" target="_blank" style="color:var(--p);font-weight:700;">💬 WhatsApp to Renew</a></div>':'')+
+    (d<=7&&d>2?'<div style="margin-top:12px;padding:11px 14px;background:rgba(255,60,0,.07);border:1px solid rgba(255,60,0,.2);border-radius:9px;font-size:13px;color:var(--p);">⚠️ Expiring in '+d+' days — <a href="https://wa.me/919548611898" target="_blank" style="color:var(--p);font-weight:700;">WhatsApp to Renew</a></div>':'')+
     '</div>';
-  // Recent payments
   api('GET','/api/payments/member/'+m.id).then(pays=>{
-    document.getElementById('mRecPay').innerHTML='<div class="ch"><span class="ct">Recent Payments</span></div>'+
-      (Array.isArray(pays)&&pays.length?pays.slice(0,3).map(p=>'<div class="payrow"><div style="display:flex;align-items:center;gap:12px;"><div class="payico">💳</div><div><div style="font-size:14px;font-weight:600;">'+(PLAN_LABEL[p.plan]||p.plan)+'</div><div style="font-size:12px;color:var(--mu);">'+fmtDate(p.date)+'</div></div></div><div><div class="payamt">₹'+p.amount+'</div><span class="badge '+p.status+'">'+p.status+'</span></div></div>').join(''):'<div class="empty">No payments yet.</div>');
+    document.getElementById('mRecPay').innerHTML='<div class="card"><div class="ch"><span class="ct">Recent Payments</span></div>'+
+      (Array.isArray(pays)&&pays.length?pays.slice(0,3).map(p=>'<div class="payrow"><div style="display:flex;align-items:center;gap:10px;"><div class="payico">💳</div><div><div style="font-size:13px;font-weight:600;">'+(PLAN_LABEL[p.plan]||p.plan)+'</div><div style="font-size:11px;color:var(--mu);">'+fmtDate(p.date)+'</div></div></div><div><div class="payamt">₹'+p.amount+'</div><span class="badge '+p.status+'">'+p.status+'</span></div></div>').join(''):'<div class="empty">No payments yet.</div>')+
+      '</div>';
   });
 }
 
-function renderMembershipFull() {
+// ── Renewal prompt (ONLY when ≤2 days or expired) ──
+function renderRenewalPrompt(daysLeft){
+  const m=session;
+  const expired=daysLeft<=0;
+  document.getElementById('mStatusBox').innerHTML=
+    '<div class="pending-box" style="border-color:rgba('+(expired?'239,68,68':'234,179,8')+',.3);background:rgba('+(expired?'239,68,68':'234,179,8')+',.06);">'+
+    '<h3 style="color:var('+(expired?'--rd':'--yw')+')">'+(expired?'❌ Membership Expired!':'⚠️ Expiring in '+daysLeft+' day(s)!')+'</h3>'+
+    '<p>'+(expired?'Renew now to continue training!':'Your membership expires very soon! Choose a plan to renew.')+'</p>'+
+    '<p style="font-size:12px;margin-top:8px;color:var(--mu);">💬 <a href="tel:+919548611898" style="color:var(--p);font-weight:700;">+91 95486 11898</a> or <a href="https://wa.me/919548611898?text=Hi, renew membership. Name: '+encodeURIComponent(m.name)+'" target="_blank" style="color:var(--p);font-weight:700;">WhatsApp</a></p></div>';
+  document.getElementById('mMemCard').innerHTML=
+    '<div style="margin-bottom:12px;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--mu);">🔄 Renew / Select Plan</div>'+
+    '<div class="plan-grid">'+renderPlanCard('monthly','Monthly','800','30','🗓️',false)+renderPlanCard('quarterly','Quarterly','2100','90','⭐',true)+renderPlanCard('annual','Annual','7500','365','🏆',false)+'</div>';
+  document.getElementById('mRecPay').innerHTML='';
+}
+
+function renderMembershipFull(){
   const m=session;
   if(!m.plan||m.memberStatus!=='active'){renderGetMembership();mPage('home');return;}
-  const d=getDaysLeft(m), exp=getExpiry(m);
+  const d=getDaysLeft(m),exp=getExpiry(m);
   const pct=Math.max(0,Math.min(100,(d/PLAN_DAYS[m.plan])*100));
   const cls=d<=3?'danger':d<=7?'warn':'';
   document.getElementById('mMemFull').innerHTML=
-    '<div class="mprofile" style="margin-bottom:22px;"><div class="mavatar">'+m.name.split(' ').map(w=>w[0]).join('').substr(0,2).toUpperCase()+'</div><div>'+
-    '<div class="mname">'+m.name+'</div><div style="margin-top:4px;display:flex;gap:8px;flex-wrap:wrap;"><span class="mpill">'+(PLAN_LABEL[m.plan]||m.plan)+'</span><span class="badge active">Active</span></div></div></div>'+
+    '<div class="mprofile"><div class="mavatar">'+m.name.split(' ').map(w=>w[0]).join('').substr(0,2).toUpperCase()+'</div><div>'+
+    '<div class="mname">'+m.name+'</div><div style="margin-top:5px;display:flex;gap:7px;flex-wrap:wrap;"><span class="mpill">'+(PLAN_LABEL[m.plan]||m.plan)+'</span><span class="badge active">Active</span></div></div></div>'+
     '<div class="memprog">'+
-    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;">'+
-    '<div><div style="font-size:11px;color:var(--mu);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">Joined</div><div style="font-size:16px;font-weight:600;">'+fmtDate(m.admissionDate)+'</div></div>'+
-    '<div><div style="font-size:11px;color:var(--mu);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">Expires</div><div style="font-size:16px;font-weight:600;">'+fmtDate(exp.toISOString().split('T')[0])+'</div></div>'+
-    '<div><div style="font-size:11px;color:var(--mu);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">Days Left</div><div class="dleft '+cls+'" style="font-size:32px;">'+(d<=0?'EXPIRED':d)+'</div></div>'+
-    '<div><div style="font-size:11px;color:var(--mu);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">Plan</div><div style="font-size:16px;font-weight:600;">'+(PLAN_LABEL[m.plan]||m.plan)+'</div></div>'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px;">'+
+    '<div><div style="font-size:10px;color:var(--mu);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">Joined</div><div style="font-size:15px;font-weight:600;">'+fmtDate(m.admissionDate)+'</div></div>'+
+    '<div><div style="font-size:10px;color:var(--mu);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">Expires</div><div style="font-size:15px;font-weight:600;">'+fmtDate(exp.toISOString().split('T')[0])+'</div></div>'+
+    '<div><div style="font-size:10px;color:var(--mu);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">Days Left</div><div class="dleft '+cls+'" style="font-size:30px;">'+(d<=0?'EXPIRED':d)+'</div></div>'+
+    '<div><div style="font-size:10px;color:var(--mu);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">Plan</div><div style="font-size:15px;font-weight:600;">'+(PLAN_LABEL[m.plan]||m.plan)+'</div></div>'+
     '</div>'+
     '<div class="pbar"><div class="pfill '+cls+'" style="width:'+pct+'%"></div></div>'+
-    '<div style="margin-top:6px;text-align:right;font-size:12px;color:var(--mu);">'+Math.round(100-pct)+'% of plan used</div>'+
-    '</div>'+
-    '<div style="margin-top:16px;"><a href="https://wa.me/919548611898?text=Hi, I need to renew my gym membership. My name is '+encodeURIComponent(m.name)+'." target="_blank" class="btn" style="text-decoration:none;display:block;text-align:center;">💬 WhatsApp to Renew</a></div>';
+    '<div style="margin-top:5px;text-align:right;font-size:11px;color:var(--mu);">'+Math.round(100-pct)+'% of plan used</div></div>'+
+    '<div style="margin-top:14px;"><a href="https://wa.me/919548611898?text=Hi, renew membership. Name: '+encodeURIComponent(m.name)+'" target="_blank" class="btn" style="text-decoration:none;display:block;text-align:center;">💬 WhatsApp to Renew</a></div>';
 }
 
-async function loadMemberPayments() {
+async function loadMemberPayments(){
   const pays=await api('GET','/api/payments/member/'+session.id);
   document.getElementById('mPayHist').innerHTML='<div class="ch"><span class="ct">Payment History</span></div>'+
-    (Array.isArray(pays)&&pays.length?pays.map(p=>'<div class="payrow"><div style="display:flex;align-items:center;gap:12px;"><div class="payico">💳</div><div><div style="font-size:14px;font-weight:600;">'+(PLAN_LABEL[p.plan]||p.plan)+'</div><div style="font-size:12px;color:var(--mu);">'+fmtDate(p.date)+'</div></div></div><div style="text-align:right;"><div class="payamt">₹'+p.amount+'</div><span class="badge '+p.status+'">'+p.status+'</span></div></div>').join(''):'<div class="empty">No payment records yet.</div>');
+    (Array.isArray(pays)&&pays.length?pays.map(p=>'<div class="payrow"><div style="display:flex;align-items:center;gap:10px;"><div class="payico">💳</div><div><div style="font-size:13px;font-weight:600;">'+(PLAN_LABEL[p.plan]||p.plan)+'</div><div style="font-size:11px;color:var(--mu);">'+fmtDate(p.date)+'</div></div></div><div style="text-align:right;"><div class="payamt">₹'+p.amount+'</div><span class="badge '+p.status+'">'+p.status+'</span></div></div>').join(''):'<div class="empty">No payment records yet.</div>');
 }
 
-async function loadMemberNotifs() {
+async function loadMemberNotifs(){
   const notifs=await api('GET','/api/notifications?memberId='+session.id);
   const myNotifs=Array.isArray(notifs)?notifs.filter(n=>!n.adminOnly):[];
   const unread=myNotifs.filter(n=>!n.read).length;
-  const nb=document.getElementById('mNBadge'); nb.textContent=unread; nb.style.display=unread>0?'inline':'none';
+  const nb=document.getElementById('mNBadge');nb.textContent=unread;nb.style.display=unread>0?'inline':'none';
   const card=document.getElementById('mNotifCard');
-  if(card) card.innerHTML=myNotifs.length?myNotifs.map(n=>'<div class="nit '+(n.read?'':'unread')+'">'+'<div class="nico '+n.type+'">'+n.icon+'</div>'+'<div class="nbody"><div class="ntitle">'+n.title+'</div><div class="ndesc">'+n.desc+'</div><div class="ntime">'+new Date(n.time).toLocaleString('en-IN')+'</div></div></div>').join(''):'<div class="empty">No notifications yet ✅</div>';
+  if(card)card.innerHTML=myNotifs.length?myNotifs.map(n=>'<div class="nit '+(n.read?'':'unread')+'"><div class="nico '+n.type+'">'+n.icon+'</div><div class="nbody"><div class="ntitle">'+n.title+'</div><div class="ndesc">'+n.desc+'</div><div class="ntime">'+new Date(n.time).toLocaleString('en-IN')+'</div></div></div>').join(''):'<div class="empty">No notifications yet ✅</div>';
 }
 
-async function doChangePw() {
+async function doChangePw(){
   const old=document.getElementById('cpOld').value.trim();
-  const nw=document.getElementById('cpNew').value, nw2=document.getElementById('cpNew2').value;
-  if(!old) return showMsg('cpMsg','Enter current password.','err');
-  if(!nw||nw.length<6) return showMsg('cpMsg','New password must be at least 6 characters.','err');
-  if(nw!==nw2) return showMsg('cpMsg','Passwords do not match.','err');
-  const phone=session.phone;
-  if(!phone) return showMsg('cpMsg','Session error — logout and login again.','err');
-  const data=await api('POST','/api/auth/change-password',{phone,oldPassword:old,newPassword:nw});
+  const nw=document.getElementById('cpNew').value,nw2=document.getElementById('cpNew2').value;
+  if(!old)return showMsg('cpMsg','Enter current password.','err');
+  if(!nw||nw.length<6)return showMsg('cpMsg','New password must be at least 6 characters.','err');
+  if(nw!==nw2)return showMsg('cpMsg','Passwords do not match.','err');
+  const data=await api('POST','/api/auth/change-password',{phone:session.phone,oldPassword:old,newPassword:nw});
   showMsg('cpMsg',data.message,data.success?'ok':'err');
   if(data.success){document.getElementById('cpOld').value='';document.getElementById('cpNew').value='';document.getElementById('cpNew2').value='';}
 }
 
-// Live (member)
-async function checkLiveStatus() {
-  try {
+// ── LIVE (MEMBER) ──
+async function checkLiveStatus(){
+  try{
     const data=await api('GET','/api/live/status');
-    const dot=document.getElementById('mLiveDot'), stat=document.getElementById('mLiveStat');
-    if(!dot) return;
-    if(data&&data.live) {
-      dot.style.background='var(--p)'; dot.style.animation='blk 1s ease infinite';
+    const dot=document.getElementById('mLiveDot'),stat=document.getElementById('mLiveStat');
+    if(!dot)return;
+    if(data&&data.live){
+      dot.style.background='var(--p)';dot.style.animation='blk 1s ease infinite';
       stat.textContent='LIVE NOW 🔴';
-      const titleEl=document.getElementById('mLiveTitle'); if(titleEl&&data.title) titleEl.textContent='— '+data.title;
+      const t2=document.getElementById('mLiveTitle2');if(t2&&data.title)t2.textContent='— '+data.title;
       document.getElementById('mLiveOff').style.display='none';
       document.getElementById('mLiveOn').style.display='block';
-      const frame=document.getElementById('mLiveFrame');
-      const src=getLiveEmbedUrl(data.url||'');
-      if(frame&&frame.src!==src) frame.src=src;
-      const ob=document.getElementById('mLiveOpenBtn'); if(ob) ob.href=data.url||'#';
-      const ul=document.getElementById('mLiveUrlLink'); if(ul) ul.textContent=data.url||'';
-    } else {
-      dot.style.background='#555'; dot.style.animation='none';
+      const embedUrl=getLiveEmbedUrl(data.url||'');
+      const ytFb=document.getElementById('mYtFbEmbed');
+      const igCard=document.getElementById('mIgLiveCard');
+      const ob=document.getElementById('mLiveOpenBtn');
+      if(embedUrl===null){
+        if(ytFb)ytFb.style.display='none';
+        if(igCard){igCard.style.display='block';const lnk=document.getElementById('mIgLiveLink');if(lnk)lnk.href=data.url||'https://instagram.com/gymlover_govindshukla70';}
+        if(ob){ob.textContent='📸 Open on Instagram';ob.href=data.url||'#';}
+      }else{
+        if(ytFb)ytFb.style.display='block';
+        if(igCard)igCard.style.display='none';
+        const frame=document.getElementById('mLiveFrame');if(frame&&frame.src!==embedUrl)frame.src=embedUrl;
+        if(ob){ob.textContent='▶ Open externally';ob.href=data.url||'#';}
+      }
+    }else{
+      dot.style.background='#444';dot.style.animation='none';
       stat.textContent='Offline';
-      const titleEl=document.getElementById('mLiveTitle'); if(titleEl) titleEl.textContent='';
+      const t2=document.getElementById('mLiveTitle2');if(t2)t2.textContent='';
       document.getElementById('mLiveOff').style.display='block';
       document.getElementById('mLiveOn').style.display='none';
-      const frame=document.getElementById('mLiveFrame'); if(frame) frame.src='';
+      const frame=document.getElementById('mLiveFrame');if(frame)frame.src='';
+      const igCard=document.getElementById('mIgLiveCard');if(igCard)igCard.style.display='none';
     }
   }catch(e){}
 }
 
-// ══════════════════════════════════════════════════════
-//  RENEWAL PROMPT (shown only when ≤2 days or expired)
-// ══════════════════════════════════════════════════════
-function renderRenewalPrompt(daysLeft) {
-  const m=session;
-  const expired = daysLeft <= 0;
-  document.getElementById('mStatusBox').innerHTML=
-    '<div class="pending-box" style="border-color:rgba('+(expired?'239,68,68':'234,179,8')+',.3);background:rgba('+(expired?'239,68,68':'234,179,8')+',.06);">'+
-    '<h3 style="color:var('+(expired?'--rd':'--yw')+')">'+(expired?'❌ Membership Expired!':'⚠️ Expiring in '+daysLeft+' day(s)!')+'</h3>'+
-    '<p>'+(expired?'Your membership has expired. Renew now to continue training!':'Your membership expires very soon! Choose a plan to renew.')+'</p>'+
-    '<p style="font-size:13px;margin-top:8px;color:var(--mu);">💬 Contact gym: <a href="tel:+919548611898" style="color:var(--p);font-weight:700;">+91 95486 11898</a> or <a href="https://wa.me/919548611898?text=Hi, I need to renew my membership. Name: '+encodeURIComponent(m.name)+'" target="_blank" style="color:var(--p);font-weight:700;">WhatsApp</a></p>'+
-    '</div>';
-  document.getElementById('mMemCard').innerHTML=
-    '<div style="margin-bottom:14px;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--mu);">🔄 Renew / Select Plan</div>'+
-    '<div class="plan-grid">'+
-      renderPlanCard('monthly','Monthly','800','30','🗓️',false)+
-      renderPlanCard('quarterly','Quarterly','2100','90','⭐',true)+
-      renderPlanCard('annual','Annual','7500','365','🏆',false)+
-    '</div>';
-  document.getElementById('mRecPay').innerHTML='';
-}
-
-// ══════════════════════════════════════════════════════
-//  LIVE PLATFORM SELECTION
-// ══════════════════════════════════════════════════════
-let currentPlatform = 'youtube';
-const platformHelp = {
-  youtube: '<strong style="color:var(--tx);">YouTube Live:</strong><br>1. Open YouTube app → tap + → Go Live<br>2. Start your live → copy the link from share<br>3. Paste link above → Go Live Now',
-  instagram: '<strong style="color:var(--tx);">Instagram Live:</strong><br>1. Open Instagram → tap + → Live<br>2. Start your live session<br>3. Copy your profile link (instagram.com/gymlover_govindshukla70/live) and paste above<br>⚠️ Instagram cannot be embedded — members will get a direct link to open',
-  facebook: '<strong style="color:var(--tx);">Facebook Live:</strong><br>1. Open Facebook → tap Live<br>2. Start your broadcast → copy the video link<br>3. Paste link above → Go Live Now'
-};
-const platformPlaceholder = {
-  youtube: 'https://youtube.com/live/... or youtu.be/...',
-  instagram: 'https://www.instagram.com/gymlover_govindshukla70/live or profile link',
-  facebook: 'https://www.facebook.com/... live video link'
-};
-
-function selectPlatform(p) {
-  currentPlatform = p;
-  document.querySelectorAll('.plat-btn').forEach(b=>b.classList.remove('active-plat'));
-  document.getElementById('plat-'+p).classList.add('active-plat');
-  document.getElementById('platformHelp').innerHTML = platformHelp[p] || '';
-  document.getElementById('aLiveUrl').placeholder = platformPlaceholder[p] || '';
-  document.getElementById('liveUrlLabel').textContent = (p.charAt(0).toUpperCase()+p.slice(1)) + ' Live URL *';
-}
-
-// Init platform help on page load
-function initLivePlatform() {
-  document.getElementById('platformHelp').innerHTML = platformHelp.youtube;
-}
-
-// ══════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════
 //  PWA & PUSH NOTIFICATIONS
-// ══════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════
 let deferredInstall=null;
+let swRegistration=null;
 
-function initPWA() {
-  const isRealDomain=location.hostname.includes('onrender.com')||location.hostname.includes('brothersgym')||location.hostname.includes('localhost');
-  if('serviceWorker' in navigator && isRealDomain) {
+function initPWA(){
+  const isRealDomain=location.hostname.includes('onrender.com')||location.hostname.includes('brothersgym')||location.hostname==='localhost';
+  if('serviceWorker' in navigator&&isRealDomain){
     navigator.serviceWorker.register('/sw.js').then(reg=>{
+      swRegistration=reg;
       console.log('SW registered');
-      // Send session to SW for background polling when app is closed
-      function sendSessionToSW() {
-        if(navigator.serviceWorker.controller && session && session.phone) {
-          navigator.serviceWorker.controller.postMessage({
-            type: 'SAVE_SESSION', session: {phone: session.phone, id: session.id}
-          });
+      function sendSessionToSW(){
+        if(navigator.serviceWorker.controller&&session&&session.phone){
+          navigator.serviceWorker.controller.postMessage({type:'SAVE_SESSION',session:{phone:session.phone,id:session.id}});
         }
       }
-      navigator.serviceWorker.ready.then(sendSessionToSW);
-      setTimeout(sendSessionToSW, 2000);
-
-      // Listen for messages from SW (navigate to section)
-      navigator.serviceWorker.addEventListener('message', e => {
-        if(!e.data) return;
-        if(e.data.type === 'navigate') {
-          const sec = e.data.section;
-          if(session && session.type === 'member') {
-            if(sec==='live') mPage('live');
-            else if(sec==='expiry') mPage('membership');
-            else if(sec==='announcement') mPage('announce');
+      navigator.serviceWorker.ready.then(()=>{sendSessionToSW();updateBellState();});
+      setTimeout(sendSessionToSW,2000);
+      navigator.serviceWorker.addEventListener('message',e=>{
+        if(!e.data)return;
+        if(e.data.type==='navigate'){
+          const sec=e.data.section;
+          if(session&&session.type==='member'){
+            if(sec==='live')mPage('live');
+            else if(sec==='expiry')mPage('membership');
+            else if(sec==='announcement')mPage('announce');
           }
         }
       });
     }).catch(e=>console.log('SW error:',e));
   }
-
   window.addEventListener('beforeinstallprompt',e=>{
-    e.preventDefault(); deferredInstall=e;
-    if(!localStorage.getItem('pwa_dismissed')) setTimeout(()=>document.getElementById('pwaBanner').classList.add('show'),3000);
+    e.preventDefault();deferredInstall=e;
+    if(!localStorage.getItem('pwa_dismissed'))setTimeout(()=>document.getElementById('pwaBanner').classList.add('show'),3000);
   });
-
-  window.addEventListener('appinstalled',()=>{
-    document.getElementById('pwaBanner').classList.remove('show');
-    floatNotif('✅ App Installed!','Brothers Gym added to home screen.','ok');
-  });
-
-  if(session){
-    document.getElementById('pushBell').style.display='flex';
-    updateBellState();
-  }
+  window.addEventListener('appinstalled',()=>{document.getElementById('pwaBanner').classList.remove('show');floatNotif('✅ App Installed!','Brothers Gym added to home screen.','ok');});
+  if(session){document.getElementById('pushBell').style.display='flex';updateBellState();}
 }
 
-async function installPWA() {
-  if(!deferredInstall) return;
-  deferredInstall.prompt();
-  await deferredInstall.userChoice;
-  deferredInstall=null;
-  document.getElementById('pwaBanner').classList.remove('show');
-}
+async function installPWA(){if(!deferredInstall)return;deferredInstall.prompt();await deferredInstall.userChoice;deferredInstall=null;document.getElementById('pwaBanner').classList.remove('show');}
+function dismissPWA(){document.getElementById('pwaBanner').classList.remove('show');localStorage.setItem('pwa_dismissed','1');}
 
-function dismissPWA() {
-  document.getElementById('pwaBanner').classList.remove('show');
-  localStorage.setItem('pwa_dismissed','1');
-}
-
-async function togglePush() {
+async function togglePush(){
   if(!('Notification' in window)){floatNotif('❌ Not Supported','Notifications not supported in this browser.','warn');return;}
-  if(Notification.permission==='denied'){floatNotif('🔕 Blocked','Enable notifications in browser/phone settings.','warn');return;}
-  if(localStorage.getItem('push_enabled')){
-    if(session) await api('POST','/api/push/unsubscribe',{phone:session.phone});
+  if(Notification.permission==='denied'){floatNotif('🔕 Blocked','Enable notifications in your browser/phone settings.','warn');return;}
+  const isOn=!!localStorage.getItem('push_enabled')&&Notification.permission==='granted';
+  if(isOn){
     localStorage.removeItem('push_enabled');
+    if(session)await api('POST','/api/push/unsubscribe',{phone:session.phone});
     floatNotif('🔕 Notifications Off','You will not receive push alerts.','info');
-  } else {
+  }else{
     const result=await Notification.requestPermission();
     if(result==='granted'){
-      if(session) await api('POST','/api/push/subscribe',{phone:session.phone||session.type});
       localStorage.setItem('push_enabled','1');
-      floatNotif('🔔 Notifications On!','You will be notified about live sessions, expiry & announcements.','ok');
-    } else {
+      if(session)await api('POST','/api/push/subscribe',{phone:session.phone||session.type});
+      // Show a test notification to confirm it works in the notification bar
+      if(swRegistration){
+        swRegistration.showNotification('✅ Notifications Enabled!',{
+          body:'You will now receive gym alerts in your notification bar.',
+          icon:'/icon-192.png',badge:'/icon-192.png',tag:'test',
+          requireInteraction:false,vibrate:[100,50,100]
+        });
+      }else if(Notification.permission==='granted'){
+        try{new Notification('✅ Notifications Enabled!',{body:'You will now receive gym alerts.',icon:'/icon-192.png'});}catch(e){}
+      }
+      floatNotif('🔔 Notifications ON!','You will be alerted for live sessions, expiry &amp; announcements.','ok');
+    }else{
       floatNotif('❌ Denied','Allow notifications in browser settings.','warn');
     }
   }
   updateBellState();
 }
 
-function updateBellState() {
-  const bell=document.getElementById('pushBell'); if(!bell) return;
+function updateBellState(){
+  const bell=document.getElementById('pushBell');if(!bell)return;
   const on=!!localStorage.getItem('push_enabled')&&Notification.permission==='granted';
   bell.classList.toggle('active',on);
   bell.textContent=on?'🔔':'🔕';
   bell.title=on?'Notifications ON — tap to disable':'Tap to enable notifications';
 }
 
+// ── POLLING (for push messages) ──
 let lastPollIds=new Set();
-async function pollPushMessages() {
-  if(!session||!session.phone) return;
-  if(!localStorage.getItem('push_enabled')) return;
-  try {
+async function pollPushMessages(){
+  if(!session||!session.phone)return;
+  if(!localStorage.getItem('push_enabled'))return;
+  try{
     const msgs=await api('GET','/api/push/poll?phone='+encodeURIComponent(session.phone));
-    if(!Array.isArray(msgs)||!msgs.length) return;
+    if(!Array.isArray(msgs)||!msgs.length)return;
     const fresh=msgs.filter(m=>!lastPollIds.has(String(m._id)));
-    fresh.forEach(m=>{
+    for(const m of fresh){
       lastPollIds.add(String(m._id));
-      showBrowserNotif(m.title,m.body,m.type);
-    });
-    if(fresh.length) await api('POST','/api/push/mark-delivered',{ids:fresh.map(m=>String(m._id))});
+      showBrowserNotif(m.title,m.body,m.type,m.url);
+    }
+    if(fresh.length)await api('POST','/api/push/mark-delivered',{ids:fresh.map(m=>String(m._id))});
   }catch(e){}
 }
 
-function showBrowserNotif(title,body,type) {
-  const t={live:'ok',expiry:'warn',announcement:'info',renewal:'ok'};
-  // Always show in-app float
-  floatNotif(title,body,t[type]||'info');
-  // Show in notification bar via Service Worker (works when app is closed/background)
-  if(Notification.permission==='granted') {
-    if(navigator.serviceWorker && navigator.serviceWorker.controller) {
-      // Use SW to show notification — appears in phone notification bar
-      navigator.serviceWorker.ready.then(reg => {
-        reg.showNotification(title, {
-          body,
-          icon: '/icon-192.png',
-          badge: '/icon-192.png',
-          tag: type||'gym',
-          renotify: true,
-          requireInteraction: ['live','expiry','announcement'].includes(type),
-          vibrate: type==='live'?[300,100,300]:[200,100,200],
-          data: {url:'/portal', type}
-        });
-      }).catch(()=>{
-        // Fallback to basic Notification
-        try { new Notification(title,{body,icon:'/icon-192.png'}); } catch(e){}
-      });
-    } else {
-      // No SW — use basic Notification API
-      try { new Notification(title,{body,icon:'/icon-192.png',tag:type,requireInteraction:['live','expiry','announcement'].includes(type)}); }
-      catch(e){}
+function showBrowserNotif(title,body,type,url){
+  const typeMap={live:'ok',expiry:'warn',announcement:'info',renewal:'ok'};
+  floatNotif(title,body,typeMap[type]||'info');
+  if(Notification.permission==='granted'){
+    const opts={body,icon:'/icon-192.png',badge:'/icon-192.png',tag:type||'gym',renotify:true,requireInteraction:['live','expiry','announcement'].includes(type),vibrate:type==='live'?[300,100,300]:[200,100,200],data:{url:url||'/portal',type}};
+    // Prefer Service Worker notification (shows in phone notification bar even when app is in background)
+    if(swRegistration){
+      swRegistration.showNotification(title,opts);
+    }else{
+      // Fallback: basic Notification API
+      try{new Notification(title,opts);}catch(e){
+        // Last resort if Notification constructor fails (some browsers)
+        console.log('Notification fallback:',title,body);
+      }
     }
   }
 }
 
-function startPollInterval() {
-  if(window._pollInterval) clearInterval(window._pollInterval);
+function startPollInterval(){
+  if(window._pollInterval)clearInterval(window._pollInterval);
   window._pollInterval=setInterval(pollPushMessages,30000);
-  setTimeout(pollPushMessages,3000);
+  setTimeout(pollPushMessages,4000);
 }
 
-// DB status check
-async function checkDBStatus() {
-  try {
-    const data=await fetch('/api/status').then(r=>r.json());
-    if(!data.dbConnected) {
-      floatNotif('⏳ Database Connecting...','Data will load in ~15 seconds.','warn');
-      setTimeout(checkDBStatus,10000);
-    }
-  }catch(e){}
-}
-
-// ══════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════
 //  INIT
-// ══════════════════════════════════════════════════════
-(function init() {
+// ════════════════════════════════════════════════════
+(function init(){
   initPWA();
   if(!session){showView('auth');return;}
-  if(session.type==='admin') loadAdminView();
+  if(session.type==='admin')loadAdminView();
   else loadMemberView();
 })();
 </script>
