@@ -920,7 +920,20 @@ tbody tr:hover td{background:rgba(255,255,255,0.02);}
     <div class="modal-title">Renew Membership</div>
     <p style="color:var(--text3);font-size:13px;margin-bottom:18px;">Member: <strong id="renew-name" style="color:var(--text)"></strong></p>
     <div class="fg"><label>New Plan</label>
-      <select id="renew-plan"><option value="monthly">Monthly ₹800</option><option value="quarterly">Quarterly ₹2100</option><option value="annual">Annual ₹7500</option></select>
+      <select id="renew-plan" onchange="toggleRenewCustom()">
+        <option value="monthly">Monthly ₹800</option>
+        <option value="quarterly">Quarterly ₹2100</option>
+        <option value="annual">Annual ₹7500</option>
+        <option value="custom">🎛️ Custom Plan</option>
+      </select>
+    </div>
+    <!-- Custom plan fields in renew modal -->
+    <div id="renew-custom-wrap" style="display:none;background:rgba(124,58,237,0.07);border:1px solid rgba(124,58,237,0.25);border-radius:9px;padding:12px;margin-bottom:4px;">
+      <div style="font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#a78bfa;margin-bottom:10px;">🎛️ Custom Plan</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div class="fg" style="margin-bottom:0;"><label>Days *</label><input id="renew-custom-days" type="number" placeholder="e.g. 45" min="1"></div>
+        <div class="fg" style="margin-bottom:0;"><label>Price (₹) *</label><input id="renew-custom-price" type="number" placeholder="e.g. 500" min="1"></div>
+      </div>
     </div>
     <div class="fg"><label>Payment Date</label><input id="renew-date" type="date"></div>
     <div class="fg"><label>Payment Status</label>
@@ -1058,9 +1071,21 @@ const API = '';
 const PLAN_DAYS  = {monthly:30, quarterly:90, annual:365};
 const PLAN_PRICE = {monthly:800, quarterly:2100, annual:7500};
 const PLAN_NAME  = {monthly:'Monthly ₹800', quarterly:'Quarterly ₹2100', annual:'Annual ₹7500'};
-const getPlanName = (plan, amount) => {
-  if (plan === 'custom') return `Custom ₹${amount||''}`;
+const getPlanName = (plan, amount, days) => {
+  if (plan === 'custom') return `Custom (${days||'?'}d) ₹${amount||''}`;
   return PLAN_NAME[plan] || plan;
+};
+// Member-aware label — use everywhere a plan name is shown
+const mPlanLabel = m => {
+  if (!m || !m.plan) return '—';
+  if (m.plan === 'custom') return `Custom (${m.customDays||'?'}d) ₹${m.customAmount||'?'}`;
+  return PLAN_NAME[m.plan] || m.plan;
+};
+// Payment-aware label
+const pPlanLabel = p => {
+  if (!p || !p.plan) return '—';
+  if (p.plan === 'custom') return `Custom ₹${p.amount||'?'}`;
+  return PLAN_NAME[p.plan] || p.plan;
 };
 
 let S = null; // session
@@ -1460,7 +1485,7 @@ function renderDash() {
     : `<tr><td colspan="4" class="empty">No members expiring soon ✅</td></tr>`;
 
   $('recent-pays').innerHTML = paidPayments.slice(0,5).length
-    ? paidPayments.slice(0,5).map(p => `<tr><td>${p.memberName}</td><td>${PLAN_NAME[p.plan]||p.plan}</td><td>₹${p.amount}</td><td>${fmtDate(p.date)}</td><td><span class="badge badge-paid">paid</span></td></tr>`).join('')
+    ? paidPayments.slice(0,5).map(p => `<tr><td>${p.memberName}</td><td>${pPlanLabel(p)}</td><td>₹${p.amount}</td><td>${fmtDate(p.date)}</td><td><span class="badge badge-paid">paid</span></td></tr>`).join('')
     : `<tr><td colspan="5" class="empty">No confirmed payments yet</td></tr>`;
 
   // Monthly revenue history section
@@ -1497,7 +1522,7 @@ function renderMembers() {
         const stBadge = st==='active'?'active':st==='expiring'?'expiring':st==='expired'?'expired':st==='pending'?'pending':'noplan';
         return `<tr>
           <td><strong>${m.name}</strong></td><td>${m.phone}</td>
-          <td>${m.plan ? PLAN_NAME[m.plan] : '—'}</td>
+          <td>${mPlanLabel(m)}</td>
           <td>${fmtDate(m.admissionDate)}</td>
           <td>${m.admissionDate&&m.plan ? fmtDate(getExpiry(m).toISOString().split('T')[0]) : '—'}</td>
           <td><span class="badge badge-${stBadge}">${st}${dl>0&&dl<=7?` (${dl}d)`:''}</span></td>
@@ -1531,7 +1556,7 @@ function renderPayments() {
   const list = allPayments.filter(p => (p.memberName||'').toLowerCase().includes(q)||(p.phone||'').includes(q));
   $('pay-body').innerHTML = list.length
     ? list.map(p => `<tr>
-        <td>${p.memberName}</td><td>${p.phone}</td><td>${PLAN_NAME[p.plan]||p.plan}</td>
+        <td>${p.memberName}</td><td>${p.phone}</td><td>${pPlanLabel(p)}</td>
         <td>₹${p.amount}</td><td>${fmtDate(p.date)}</td>
         <td><span class="badge badge-${p.status}">${p.status}</span></td>
         <td>${p.status!=='paid'?`<button class="tbl-btn ok" onclick="markPaid('${p.id}')">✓ Mark Paid</button>`:''}</td>
@@ -1611,17 +1636,42 @@ function openRenew(id, name) {
   renewTarget = id;
   $('renew-name').textContent = name;
   $('renew-date').value = todayStr();
+  $('renew-plan').value = 'monthly';
+  // Pre-fill custom if member has custom plan
+  const m = allMembers.find(x => x.id===id);
+  if (m?.plan === 'custom') {
+    $('renew-plan').value = 'custom';
+    if ($('renew-custom-days'))  $('renew-custom-days').value  = m.customDays  || '';
+    if ($('renew-custom-price')) $('renew-custom-price').value = m.customAmount || '';
+  }
+  toggleRenewCustom();
   openModal('renewModal');
 }
+
+function toggleRenewCustom() {
+  const plan = $('renew-plan')?.value;
+  const wrap = $('renew-custom-wrap');
+  if (wrap) wrap.style.display = plan === 'custom' ? 'block' : 'none';
+}
+
 async function confirmRenew() {
+  const plan = $('renew-plan').value;
+  const customDays  = plan === 'custom' ? parseInt($('renew-custom-days')?.value  || 0) : null;
+  const customPrice = plan === 'custom' ? parseInt($('renew-custom-price')?.value || 0) : null;
+  if (plan === 'custom' && (!customDays  || customDays  < 1)) { toast('❌ Enter valid custom days','','danger'); return; }
+  if (plan === 'custom' && (!customPrice || customPrice < 1)) { toast('❌ Enter valid custom price','','danger'); return; }
   const data = await api('POST',`/api/members/${renewTarget}/renew`,{
-    plan:$('renew-plan').value, paymentDate:$('renew-date').value, paymentStatus:$('renew-status').value
+    plan,
+    paymentDate:   $('renew-date').value,
+    paymentStatus: $('renew-status').value,
+    customDays:    customDays,
+    customAmount:  customPrice
   });
   closeModal('renewModal');
   if (data.success) {
     await loadAdminData();
     toast('🔄 Renewed',`${data.member?.name} renewed.`,'ok');
-  } else toast('❌ Error',data.message,'danger');
+  } else toast('❌ Error', data.message,'danger');
 }
 
 function openConfirmPay(id, name) {
@@ -1987,7 +2037,7 @@ function renderHome() {
   // Plan display name — custom shows custom amount
   const planDisplay = m.plan === 'custom'
     ? `Custom ${m.customDays||'?'}d ₹${m.customAmount||'?'}`
-    : (m.plan ? PLAN_NAME[m.plan] : '');
+    : (m.plan ? (PLAN_NAME[m.plan] || m.plan) : '');
 
   $('m-profile-card').innerHTML = `
     <div class="m-profile">
@@ -2097,7 +2147,7 @@ async function sendRenewalRequest(plan, amount, label) {
 
 async function requestRenewalFromAdmin() {
   const d = getDaysLeft(S);
-  const planName = PLAN_NAME[S.plan] || S.plan || 'current plan';
+  const planName = mPlanLabel(S);
   const ok = confirm(`Send renewal request to admin?\n\nThis will notify the gym admin that you want to renew your ${planName} membership.\n\nThey will contact you to confirm payment.`);
   if (!ok) return;
   try {
@@ -2137,7 +2187,7 @@ function renderActiveCard() {
       <div class="prog-bar"><div class="prog-fill ${cls}" style="width:${pct}%"></div></div>
       <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text3);margin-top:8px;">
         <span>${Math.round(100-pct)}% used</span>
-        <span>${m.plan==='custom'?`Custom ${m.customDays||'?'}d ₹${m.customAmount||'?'}`:(PLAN_NAME[m.plan]||m.plan)}</span>
+        <span>${mPlanLabel(m)}</span>
       </div>
       ${d<=7&&d>2?`<div style="margin-top:12px;padding:11px 14px;background:var(--accent-dim);border:1px solid rgba(255,60,0,0.2);border-radius:9px;font-size:13px;color:var(--accent);">⚠️ Expiring in ${d} days — <a href="https://wa.me/919548611898" target="_blank" style="color:var(--accent);font-weight:700;">WhatsApp to Renew</a></div>`:''}
     </div>`;
@@ -2205,7 +2255,7 @@ function renderMembershipFull() {
   const cls = d<=3?'danger':d<=7?'warn':'';
   const planDisplay = m.plan === 'custom'
     ? `Custom ${m.customDays||'?'}d ₹${m.customAmount||'?'}`
-    : (PLAN_NAME[m.plan] || m.plan);
+    : (PLAN_NAME[m.plan] || m.plan); // standard plan
   $('m-mem-full').innerHTML = `
     <div class="m-profile">
       <div class="m-avatar">${m.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase()}</div>
@@ -2231,7 +2281,7 @@ async function loadMemberPayments() {
   const pays = await api('GET',`/api/payments/member/${S.id}`);
   const paid = Array.isArray(pays) ? pays.filter(p=>p.status==='paid') : [];
   const getPName = p => p.plan === 'custom'
-    ? `Custom ${p.customDays||S.customDays||'?'}d`
+    ? `Custom (${p.customDays||S.customDays||'?'}d) ₹${p.amount}`
     : (PLAN_NAME[p.plan] || p.plan);
   $('m-pay-hist').innerHTML = `<div class="card-head"><span class="card-title">Confirmed Payments</span></div>` +
     (paid.length
