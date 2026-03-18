@@ -10,11 +10,32 @@ self.addEventListener('install', e => {
 });
 
 self.addEventListener('activate', e => {
-  e.waitUntil(
-    caches.keys()
-      .then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k))))
-      .then(() => self.clients.claim())
-  );
+  e.waitUntil((async () => {
+
+    const keys = await caches.keys();
+    await Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)));
+
+    await self.clients.claim();
+
+    // Start background notification polling
+    try {
+      const reg = await self.registration;
+
+      if (reg.sync) {
+        await reg.sync.register('poll-notifications');
+      }
+
+      if (reg.periodicSync) {
+        await reg.periodicSync.register('gym-poll', {
+          minInterval: 30 * 60 * 1000
+        });
+      }
+
+    } catch(err) {
+      // ignore errors
+    }
+
+  })());
 });
 
 // Network-first fetch
@@ -41,27 +62,57 @@ self.addEventListener('push', e => {
 });
 
 function showNotif(title, data) {
-  const actions = data.type === 'live'
-    ? [{action:'watch',title:'▶ Watch Now'},{action:'dismiss',title:'Dismiss'}]
-    : data.type === 'expiry'
-    ? [{action:'renew',title:'🔄 Renew Now'},{action:'dismiss',title:'Later'}]
-    : data.type === 'announcement'
-    ? [{action:'read',title:'📢 Read Now'},{action:'dismiss',title:'Later'}]
-    : data.type === 'reset'
-    ? [{action:'open',title:'🔑 Login Now'},{action:'dismiss',title:'Later'}]
-    : [{action:'open',title:'💪 Open App'}];
+
+  // Prevent duplicate notifications
+  const notifTag = data.id || data._id || data.type || 'general';
+
+  const actions =
+    data.type === 'live'
+      ? [
+          { action: 'watch', title: '▶ Watch Now' },
+          { action: 'dismiss', title: 'Dismiss' }
+        ]
+      : data.type === 'expiry'
+      ? [
+          { action: 'renew', title: '🔄 Renew Now' },
+          { action: 'dismiss', title: 'Later' }
+        ]
+      : data.type === 'announcement'
+      ? [
+          { action: 'read', title: '📢 Read Now' },
+          { action: 'dismiss', title: 'Later' }
+        ]
+      : data.type === 'reset'
+      ? [
+          { action: 'open', title: '🔑 Login Now' },
+          { action: 'dismiss', title: 'Later' }
+        ]
+      : [{ action: 'open', title: '💪 Open App' }];
+
   return self.registration.showNotification(title, {
     body: data.body,
     icon: '/icon-192.png',
     badge: '/icon-192.png',
-    tag: data.type || 'general',
-    renotify: true,
+
+    // ensures notification only shows once
+    tag: notifTag,
+    renotify: false,
+
     requireInteraction: ['live','expiry','announcement','reset'].includes(data.type),
-    data: {url: data.url || '/portal', type: data.type},
+
+    data: {
+      url: data.url || '/portal',
+      type: data.type
+    },
+
     actions,
-    vibrate: data.type === 'live' ? [300,100,300,100,300]
-           : data.type === 'expiry' ? [200,100,200]
-           : [100,50,100]
+
+    vibrate:
+      data.type === 'live'
+        ? [300,100,300,100,300]
+        : data.type === 'expiry'
+        ? [200,100,200]
+        : [100,50,100]
   });
 }
 
@@ -82,35 +133,74 @@ self.addEventListener('periodicsync', e => {
 async function bgPoll() {
   try {
     const cache = await caches.open(CACHE);
+
+    // get saved session
     const sessRes = await cache.match('__session__');
     if (!sessRes) return;
+
     const sess = await sessRes.json();
     if (!sess?.phone) return;
+
+    // request pending notifications
     const res = await fetch(`/api/push/poll?phone=${encodeURIComponent(sess.phone)}`);
     if (!res.ok) return;
+
     const msgs = await res.json();
     if (!Array.isArray(msgs) || !msgs.length) return;
+
     const seenKey = '__seen_ids__';
     const seenRes = await cache.match(seenKey);
+
     let seen = new Set();
-    try { if (seenRes) seen = new Set(await seenRes.json()); } catch(e) {}
-    const fresh = msgs.filter(m => !seen.has(String(m._id)));
+    try {
+      if (seenRes) {
+        const arr = await seenRes.json();
+        seen = new Set(arr);
+      }
+    } catch (e) {}
+
+    // filter fresh notifications safely
+    const fresh = msgs.filter(m => {
+      const id = String(m._id || m.id || '');
+      if (!id) return false;
+      return !seen.has(id);
+    });
+
     for (const m of fresh) {
-      seen.add(String(m._id));
-      await showNotif(m.title, m);
+      const id = String(m._id || m.id || '');
+      if (!id) continue;
+
+      seen.add(id);
+
+      await showNotif(m.title || 'Brothers Gym 💪', {
+        ...m,
+        id
+      });
     }
+
     if (fresh.length) {
-      await cache.put(seenKey, new Response(JSON.stringify([...seen].slice(-500)), {headers:{'Content-Type':'application/json'}}));
-      // Mark delivered
+      // store seen ids (limit 500)
+      await cache.put(
+        seenKey,
+        new Response(JSON.stringify([...seen].slice(-500)), {
+          headers: { 'Content-Type': 'application/json' }
+        })
+      );
+
+      // mark notifications delivered on server
       fetch('/api/push/mark-delivered', {
         method: 'POST',
-        headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({ids: fresh.map(m => String(m._id))})
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ids: fresh.map(m => String(m._id || m.id))
+        })
       }).catch(() => {});
     }
-  } catch(e) {}
-}
 
+  } catch (e) {
+    console.error('bgPoll error', e);
+  }
+}
 // ── Notification click ────────────────────────────────────────
 self.addEventListener('notificationclick', e => {
   e.notification.close();
