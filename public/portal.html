@@ -1071,6 +1071,55 @@ const API = '';
 const PLAN_DAYS  = {monthly:30, quarterly:90, annual:365};
 const PLAN_PRICE = {monthly:800, quarterly:2100, annual:7500};
 const PLAN_NAME  = {monthly:'Monthly ₹800', quarterly:'Quarterly ₹2100', annual:'Annual ₹7500'};
+const vapidPublicKey = "BFsYNuC01jQIfwKA0DQkrE1xSqRP2_pBlaPWZoie73KQlkSz5mAz5_auBiEwVbsQ6JKbl5L3wW3Vtg3ARBNZ53s";
+// ════════════════════════════════════════
+// PUSH SUBSCRIBE FUNCTION
+// ════════════════════════════════════════
+
+async function subscribePush(phone){
+
+  const reg = await navigator.serviceWorker.ready;
+
+  const sub = await reg.pushManager.subscribe({
+    userVisibleOnly: true,
+    applicationServerKey: urlBase64ToUint8Array(vapidPublicKey)
+  });
+
+  await fetch('/api/push/subscribe', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({
+      phone,
+      subscription: sub
+    })
+  });
+
+}
+
+
+// ════════════════════════════════════════
+// HELPER FUNCTION
+// ════════════════════════════════════════
+
+function urlBase64ToUint8Array(base64String) {
+
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+
+  const base64 = (base64String + padding)
+    .replace(/-/g, '+')
+    .replace(/_/g, '/');
+
+  const rawData = atob(base64);
+
+  const outputArray = new Uint8Array(rawData.length);
+
+  for (let i = 0; i < rawData.length; ++i) {
+    outputArray[i] = rawData.charCodeAt(i);
+  }
+
+  return outputArray;
+}
+
 const getPlanName = (plan, amount, days) => {
   if (plan === 'custom') return `Custom (${days||'?'}d) ₹${amount||''}`;
   return PLAN_NAME[plan] || plan;
