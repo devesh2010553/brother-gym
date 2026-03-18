@@ -231,7 +231,22 @@ app.post('/api/auth/login', loginLimiter, requireDB, async (req,res) => {
     res.json({success:false, message:'Server error. Try again.'});
   }
 });
+// Member requests password reset (sends admin notification)
+app.post('/api/auth/request-password-reset', requireDB, async (req,res) => {
+  const {phone, name} = req.body;
+  await addNotification({type:'warn',icon:'🔑',title:`Password reset request`,
+    desc:`${name||phone} (${phone}) forgot password. Go to Members → 🔑 to reset.`,adminOnly:true});
+  res.json({success:true});
+});
 
+// Admin resets a member's password directly
+app.post('/api/auth/admin-reset-password', requireDB, async (req,res) => {
+  const {phone, newPassword, adminPassword} = req.body;
+  if (adminPassword !== (process.env.ADMIN_PASSWORD||'admin123')) return res.json({success:false,message:'Unauthorized'});
+  const r = await db.collection('members').updateOne({phone},{$set:{password:newPassword}});
+  if (r.matchedCount===0) return res.json({success:false,message:'Member not found'});
+  res.json({success:true});
+});
 app.post('/api/auth/reset-password', requireDB, async (req,res) => {
   try {
     let {phone, newPassword, password} = req.body;

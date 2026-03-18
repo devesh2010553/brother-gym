@@ -450,24 +450,15 @@ tbody tr:hover td{background:rgba(255,255,255,0.02);}
 
     <!-- FORGOT FORM -->
     <div id="form-forgot" style="display:none">
+      <p style="font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:16px;">Enter your registered phone number. A reset request will be sent to the gym admin. They will give you a temporary password — then change it in Settings.</p>
       <div class="fg"><label>Phone Number</label>
-        <div class="otp-row">
-          <input id="f-phone" type="tel" placeholder="98765 43210" oninput="numOnly(this)" inputmode="numeric">
-          <button class="otp-btn" id="f-otp-btn" onclick="sendOTP('f')">Get OTP</button>
-        </div>
+        <input id="f-phone" type="tel" placeholder="98765 43210" oninput="numOnly(this)" inputmode="numeric">
       </div>
-      <div id="f-otp-group" style="display:none">
-        <div class="fg">
-          <label>Verification Code <span id="f-timer" style="color:var(--yellow);font-size:11px;margin-left:6px;"></span></label>
-          <input id="f-otp" type="text" placeholder="••••••" maxlength="6" style="text-align:center;font-size:22px;letter-spacing:8px;font-weight:700;" oninput="checkOTP('f')">
-        </div>
-        <div id="f-otp-show"></div>
-      </div>
-      <div id="f-pw-group" style="display:none">
-        <div class="fg"><label>New Password</label><input id="f-pw" type="password" placeholder="Min 6 characters" onkeydown="if(event.key==='Enter')doReset()"></div>
+      <div class="fg"><label>Your Name (for admin)</label>
+        <input id="f-name" placeholder="So admin knows who you are">
       </div>
       <div id="f-msg" class="msg"></div>
-      <button class="btn" id="f-btn" onclick="doReset()" style="display:none">Reset Password</button>
+      <button class="btn" id="f-btn" onclick="doRequestReset()">📨 Send Reset Request to Admin</button>
       <p class="hint"><a class="link" onclick="switchTab('login')">← Back to Login</a></p>
     </div>
 
@@ -966,7 +957,70 @@ tbody tr:hover td{background:rgba(255,255,255,0.02);}
   </div>
 </div>
 
-<!-- Payment Modal (Member) -->
+<!-- Custom Price Modal -->
+<div class="overlay" id="customPriceModal">
+  <div class="modal" style="max-width:440px;">
+    <button class="modal-close" onclick="closeModal('customPriceModal')">✕</button>
+    <div class="modal-title">🎛️ Custom Pricing</div>
+    <p style="color:var(--text3);font-size:13px;margin-bottom:18px;">Member: <strong id="cp-price-name" style="color:var(--text)"></strong></p>
+    <input type="hidden" id="cp-price-id">
+    <div class="fg">
+      <label>Plan Duration</label>
+      <select id="cp-price-plan">
+        <option value="monthly">Monthly (30 days)</option>
+        <option value="quarterly">Quarterly (90 days)</option>
+        <option value="annual">Annual (365 days)</option>
+        <option value="custom">Custom Days</option>
+      </select>
+    </div>
+    <div class="fg" id="cp-custom-days-group" style="display:none;">
+      <label>Custom Days *</label>
+      <input id="cp-custom-days" type="number" placeholder="e.g. 45" min="1" max="730">
+    </div>
+    <div class="fg">
+      <label>Custom Price (₹) *</label>
+      <input id="cp-price-amount" type="number" placeholder="e.g. 500" min="1">
+      <div style="font-size:11px;color:var(--text3);margin-top:5px;">Standard: Monthly ₹800 · Quarterly ₹2100 · Annual ₹7500</div>
+    </div>
+    <div class="fg"><label>Payment Date</label><input id="cp-price-date" type="date"></div>
+    <div class="fg"><label>Payment Status</label>
+      <select id="cp-price-status"><option value="paid">Paid — Confirmed</option><option value="pending">Pending</option></select>
+    </div>
+    <div style="background:rgba(255,60,0,0.06);border:1px solid rgba(255,60,0,0.2);border-radius:9px;padding:10px 12px;font-size:12px;color:var(--text2);margin-bottom:4px;">
+      💡 This creates a custom plan at your specified price. Days left will count down from today using the custom duration.
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('customPriceModal')">Cancel</button>
+      <button class="btn" style="background:#7c3aed;" onclick="confirmCustomPrice()">✅ Apply Custom Plan</button>
+    </div>
+  </div>
+</div>
+
+<!-- Reset Password Admin Modal -->
+<div class="overlay" id="resetPwAdminModal">
+  <div class="modal" style="max-width:420px;">
+    <button class="modal-close" onclick="closeModal('resetPwAdminModal')">✕</button>
+    <div class="modal-title">🔑 Reset Member Password</div>
+    <p style="color:var(--text3);font-size:13px;margin-bottom:18px;">Member: <strong id="rp-mem-name" style="color:var(--text)"></strong> &nbsp;<span id="rp-mem-phone" style="color:var(--text3);font-size:12px;"></span></p>
+    <input type="hidden" id="rp-mem-id">
+    <input type="hidden" id="rp-mem-phone-val">
+    <div class="fg">
+      <label>New Temporary Password *</label>
+      <div class="pw-wrap">
+        <input type="password" id="rp-new-pw" placeholder="Set a temp password for member">
+        <button class="pw-eye" type="button" onclick="togglePw('rp-new-pw',this)">👁</button>
+      </div>
+    </div>
+    <div style="background:rgba(16,185,129,0.07);border:1px solid rgba(16,185,129,0.2);border-radius:8px;padding:9px 12px;font-size:12px;color:var(--text2);margin-bottom:4px;">
+      📱 Share this password with the member. They can change it in Settings after login.
+    </div>
+    <div id="rp-msg" class="msg"></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('resetPwAdminModal')">Cancel</button>
+      <button class="btn btn-green" onclick="doAdminResetPw()">🔑 Set Password</button>
+    </div>
+  </div>
+</div>
 <div class="overlay" id="payModal">
   <div class="pay-modal">
     <button class="modal-close" onclick="closeModal('payModal')" style="position:absolute;top:16px;right:16px;background:none;border:none;color:var(--text3);font-size:20px;cursor:pointer;padding:4px;border-radius:6px;">✕</button>
@@ -995,6 +1049,10 @@ const API = '';
 const PLAN_DAYS  = {monthly:30, quarterly:90, annual:365};
 const PLAN_PRICE = {monthly:800, quarterly:2100, annual:7500};
 const PLAN_NAME  = {monthly:'Monthly ₹800', quarterly:'Quarterly ₹2100', annual:'Annual ₹7500'};
+const getPlanName = (plan, amount) => {
+  if (plan === 'custom') return `Custom ₹${amount||''}`;
+  return PLAN_NAME[plan] || plan;
+};
 
 let S = null; // session
 let allMembers = [], allPayments = [];
@@ -1041,7 +1099,8 @@ function saveSession(s) {
 
 function getExpiry(m) {
   const d = new Date(m.admissionDate);
-  d.setDate(d.getDate() + (PLAN_DAYS[m.plan] || 30));
+  const days = m.plan === 'custom' ? (m.customDays || 30) : (PLAN_DAYS[m.plan] || 30);
+  d.setDate(d.getDate() + days);
   return d;
 }
 
@@ -1290,16 +1349,19 @@ async function doSignup() {
   setTimeout(() => { saveSession({type:'member',...data.member}); loadMemberView(); }, 1200);
 }
 
-async function doReset() {
+async function doRequestReset() {
   const ph = $('f-phone').value.replace(/\D/g,'').slice(-10);
-  const pw = $('f-pw').value;
-  if (!otpOK.f) return showMsg('f-msg','Please verify OTP first.','err');
-  if (!pw || pw.length < 6) return showMsg('f-msg','Password must be at least 6 characters.','err');
-  setBtn('f-btn',true,'Resetting…');
-  const data = await api('POST','/api/auth/reset-password',{phone:ph,newPassword:pw});
-  setBtn('f-btn',false,'Reset Password');
-  showMsg('f-msg',data.message,data.success?'ok':'err');
-  if (data.success) setTimeout(() => switchTab('login'), 2000);
+  const name = $('f-name')?.value.trim() || '';
+  if (ph.length !== 10) return showMsg('f-msg','Enter a valid 10-digit phone number.','err');
+  setBtn('f-btn', true, 'Sending request…');
+  // Check member exists
+  const check = await api('POST','/api/auth/request-password-reset',{phone:ph, name});
+  setBtn('f-btn', false, '📨 Send Reset Request to Admin');
+  if (check.success) {
+    showMsg('f-msg','✅ Request sent! Admin will give you a temporary password. Then change it in Settings.','ok');
+  } else {
+    showMsg('f-msg', check.message || 'Could not send request. Contact gym directly.','err');
+  }
 }
 
 async function doAdminLogin() {
@@ -1434,6 +1496,8 @@ function renderMembers() {
           <td><div class="tbl-btns">
             <button class="tbl-btn" onclick="openEdit('${m.id}')">✏️</button>
             <button class="tbl-btn" onclick="openRenew('${m.id}','${m.name}')">🔄</button>
+            <button class="tbl-btn" style="color:#a78bfa;" onclick="openCustomPrice('${m.id}','${m.name}')">🎛️</button>
+            <button class="tbl-btn" onclick="openResetPw('${m.id}','${m.name}','${m.phone}')">🔑</button>
             <button class="tbl-btn del" onclick="openDelete('${m.id}','${m.name}')">🗑️</button>
           </div></td>
         </tr>`;
@@ -1564,6 +1628,78 @@ async function confirmDelete() {
   $('del-confirm-btn').disabled = false;
   $('del-confirm-btn').textContent = '🗑️ Remove';
   loadAdminData(); toast('🗑️ Deleted','Member removed.','info');
+}
+
+// ── CUSTOM PRICING ──
+function openCustomPrice(id, name) {
+  $('cp-price-id').value = id;
+  $('cp-price-name').textContent = name;
+  $('cp-price-date').value = todayStr();
+  $('cp-price-amount').value = '';
+  $('cp-custom-days-group').style.display = 'none';
+  $('cp-price-plan').value = 'monthly';
+  $('cp-price-plan').onchange = function() {
+    $('cp-custom-days-group').style.display = this.value === 'custom' ? 'block' : 'none';
+  };
+  openModal('customPriceModal');
+}
+
+async function confirmCustomPrice() {
+  const id     = $('cp-price-id').value;
+  const plan   = $('cp-price-plan').value;
+  const amount = parseInt($('cp-price-amount').value);
+  const date   = $('cp-price-date').value;
+  const status = $('cp-price-status').value;
+  const customDays = plan === 'custom' ? parseInt($('cp-custom-days').value) : null;
+  if (!amount || amount < 1) { toast('❌ Enter a valid price','','danger'); return; }
+  if (plan === 'custom' && (!customDays || customDays < 1)) { toast('❌ Enter valid custom days','','danger'); return; }
+  const finalPlan = plan === 'custom' ? 'custom' : plan;
+  const finalDays = plan === 'custom' ? customDays : PLAN_DAYS[plan];
+  const data = await api('POST',`/api/members/${id}/renew`,{
+    plan: finalPlan,
+    customDays: finalDays,
+    customAmount: amount,
+    paymentDate: date,
+    paymentStatus: status,
+    adminPassword: S?.adminPassword||''
+  });
+  closeModal('customPriceModal');
+  if (data.success) {
+    await loadAdminData();
+    toast('🎛️ Custom Plan Applied',`₹${amount} for ${finalDays} days.`,'ok');
+  } else toast('❌ Error',data.message,'danger');
+}
+
+// ── ADMIN PASSWORD RESET ──
+function openResetPw(id, name, phone) {
+  $('rp-mem-id').value = id;
+  $('rp-mem-name').textContent = name;
+  $('rp-mem-phone').textContent = phone;
+  $('rp-mem-phone-val').value = phone;
+  $('rp-new-pw').value = '';
+  $('rp-msg').style.display = 'none';
+  openModal('resetPwAdminModal');
+}
+
+async function doAdminResetPw() {
+  const phone = $('rp-mem-phone-val').value;
+  const pw = $('rp-new-pw').value;
+  if (!pw || pw.length < 4) { showMsg('rp-msg','Enter a password (min 4 chars).','err'); return; }
+  const data = await api('POST','/api/auth/admin-reset-password',{
+    phone, newPassword: pw, adminPassword: S?.adminPassword||''
+  });
+  if (data.success) {
+    showMsg('rp-msg','✅ Password reset! Share it with the member.','ok');
+    setTimeout(() => closeModal('resetPwAdminModal'), 2500);
+    toast('🔑 Password Reset','Member can now login with new password.','ok');
+    // Add notification for the member
+    await api('POST','/api/notifications',{
+      type:'info', icon:'🔑',
+      title:'Password reset by admin',
+      desc:'Your login password has been reset by the gym admin. Login with your new password, then change it in Settings.',
+      memberId: $('rp-mem-id').value, adminOnly:false
+    });
+  } else showMsg('rp-msg', data.message||'Failed.','err');
 }
 
 async function loadAdminNotifs() {
@@ -1853,9 +1989,14 @@ function renderRenewPrompt(daysLeft) {
   $('m-status-box').innerHTML = `
     <div class="pending-box" style="border-color:rgba(${expired?'239,68,68':'245,158,11'},.3);background:rgba(${expired?'239,68,68':'245,158,11'},.06);">
       <h3 style="color:var(${expired?'--red':'--yellow'})">${expired?'❌ Membership Expired!':'⚠️ Expiring in '+daysLeft+' day(s)!'}</h3>
-      <p>${expired?'Renew now to continue training!':'Your membership expires very soon! Renew to keep access.'}<br><br>
-      <a href="tel:+919548611898" style="color:var(--accent);font-weight:600;">+91 95486 11898</a> &nbsp;|&nbsp;
-      <a href="https://wa.me/919548611898?text=Hi, renew membership. Name: ${encodeURIComponent(m.name)}" target="_blank" style="color:var(--accent);font-weight:600;">WhatsApp</a></p>
+      <p>${expired?'Renew now to continue training!':'Your membership expires very soon! Renew to keep access.'}</p>
+      <div style="margin-top:12px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+        <a href="tel:+919548611898" style="color:var(--accent);font-weight:600;font-size:13px;">📞 Call</a>
+        <span style="color:var(--text3)">|</span>
+        <a href="https://wa.me/919548611898?text=Hi, renew membership. Name: ${encodeURIComponent(m.name)}" target="_blank" style="color:var(--accent);font-weight:600;font-size:13px;">💬 WhatsApp</a>
+        <span style="color:var(--text3)">|</span>
+        <a onclick="requestRenewalFromAdmin()" style="color:var(--accent);font-weight:600;font-size:13px;cursor:pointer;">📨 Request Admin</a>
+      </div>
     </div>`;
   $('m-mem-card').innerHTML = buildPlanGrid();
   $('m-rec-pays').innerHTML = '';
@@ -1921,7 +2062,6 @@ function renderActiveCard() {
   const d = getDaysLeft(m), exp = getExpiry(m);
   const pct = Math.max(0,Math.min(100,(d/PLAN_DAYS[m.plan])*100));
   const cls = d<=3?'danger':d<=7?'warn':'';
-  // Daily tracking label
   const trackMsg = d<=0 ? 'Membership expired!' : d===1 ? '⚠️ Last day! Renew immediately.' : d<=3 ? `🚨 Only ${d} days left! Renew now.` : d<=7 ? `⏰ ${d} days left — expiring soon.` : `${d} days remaining`;
   $('m-status-box').innerHTML = '';
   $('m-mem-card').innerHTML = `
@@ -1942,10 +2082,6 @@ function renderActiveCard() {
         <span>${PLAN_NAME[m.plan]||m.plan}</span>
       </div>
       ${d<=7&&d>2?`<div style="margin-top:12px;padding:11px 14px;background:var(--accent-dim);border:1px solid rgba(255,60,0,0.2);border-radius:9px;font-size:13px;color:var(--accent);">⚠️ Expiring in ${d} days — <a href="https://wa.me/919548611898" target="_blank" style="color:var(--accent);font-weight:700;">WhatsApp to Renew</a></div>`:''}
-      ${d<=0?`<div style="margin-top:12px;padding:11px 14px;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.25);border-radius:9px;font-size:13px;color:var(--red);">❌ Expired — contact gym to renew</div>`:''}
-      <div style="margin-top:12px;">
-        <button class="btn" style="background:transparent;border:1px solid var(--border2);color:var(--text2);font-size:13px;padding:10px;" onclick="requestRenewalFromAdmin()">📨 Request Renewal Confirmation from Admin</button>
-      </div>
     </div>`;
   // Recent payments (paid only)
   api('GET',`/api/payments/member/${m.id}`).then(pays => {
@@ -1956,7 +2092,6 @@ function renderActiveCard() {
         : `<div class="empty">No confirmed payments yet.</div>`}
     </div>`;
   });
-  // Schedule the daily midnight refresh
   scheduleMidnightRefresh();
 }
 
@@ -2134,22 +2269,39 @@ let deferredInstall = null;
 function initPWA() {
   const realDomain = location.hostname.includes('onrender.com')||location.hostname.includes('brothersgym')||location.hostname==='localhost';
   if ('serviceWorker' in navigator && realDomain) {
-    navigator.serviceWorker.register('/sw.js').then(reg => {
+    navigator.serviceWorker.register('/sw.js').then(async reg => {
       swReg = reg;
       function syncSession() {
         if (navigator.serviceWorker.controller && S?.phone) {
           navigator.serviceWorker.controller.postMessage({type:'SAVE_SESSION',session:{phone:S.phone,id:S.id}});
         }
       }
-      navigator.serviceWorker.ready.then(() => { syncSession(); updateBell(); });
+      navigator.serviceWorker.ready.then(async () => {
+        syncSession();
+        updateBell();
+        // Register periodic background sync (fires every 30 min even when app closed)
+        try {
+          if ('periodicSync' in reg) {
+            const status = await navigator.permissions.query({name:'periodic-background-sync'});
+            if (status.state === 'granted') {
+              await reg.periodicSync.register('gym-poll', {minInterval: 30 * 60 * 1000});
+            }
+          }
+        } catch(e) {}
+        // Also register one-shot background sync
+        try {
+          if ('sync' in reg) await reg.sync.register('poll-notifications');
+        } catch(e) {}
+      });
       setTimeout(syncSession, 2000);
       navigator.serviceWorker.addEventListener('message', e => {
         if (!e.data) return;
         if (e.data.type==='navigate' && S?.type==='member') {
           const sec = e.data.section;
-          if (sec==='live')         memberNav('live');
-          else if (sec==='expiry')  memberNav('membership');
+          if (sec==='live')              memberNav('live');
+          else if (sec==='expiry')       memberNav('membership');
           else if (sec==='announcement') memberNav('announce');
+          else if (sec==='reset')        memberNav('settings');
         }
       });
     }).catch(e => console.log('SW err:',e));
@@ -2158,7 +2310,10 @@ function initPWA() {
     e.preventDefault(); deferredInstall = e;
     if (!localStorage.getItem('_pwa_dismiss')) setTimeout(() => $('pwaBanner').classList.add('show'), 3000);
   });
-  window.addEventListener('appinstalled', () => { $('pwaBanner').classList.remove('show'); toast('✅ App Installed!','Tap the icon on your home screen.','ok'); });
+  window.addEventListener('appinstalled', () => {
+    $('pwaBanner').classList.remove('show');
+    toast('✅ App Installed!','Tap the icon on your home screen.','ok');
+  });
   if (S) { $('pushBell').style.display='flex'; updateBell(); }
 }
 
@@ -2167,7 +2322,7 @@ function dismissPWA() { $('pwaBanner').classList.remove('show'); localStorage.se
 
 async function togglePush() {
   if (!('Notification' in window)) { toast('❌ Not Supported','Notifications not supported in this browser.','warn'); return; }
-  if (Notification.permission==='denied') { toast('🔕 Blocked','Enable notifications in browser settings.','warn'); return; }
+  if (Notification.permission==='denied') { toast('🔕 Blocked','Enable notifications in browser/phone settings.','warn'); return; }
   const isOn = !!localStorage.getItem('_push') && Notification.permission==='granted';
   if (isOn) {
     localStorage.removeItem('_push');
@@ -2178,12 +2333,24 @@ async function togglePush() {
     if (r === 'granted') {
       localStorage.setItem('_push','1');
       if (S) await api('POST','/api/push/subscribe',{phone:S.phone||S.type});
+      // Register background sync
       if (swReg) {
-        swReg.showNotification('✅ Notifications Enabled!',{body:'You will now get gym alerts.',icon:'/icon-192.png',badge:'/icon-192.png',tag:'test',vibrate:[100,50,100]});
+        try { await swReg.sync.register('poll-notifications'); } catch(e) {}
+        try {
+          if ('periodicSync' in swReg) {
+            const status = await navigator.permissions.query({name:'periodic-background-sync'});
+            if (status.state === 'granted') await swReg.periodicSync.register('gym-poll',{minInterval:30*60*1000});
+          }
+        } catch(e) {}
+        // Test notification
+        swReg.showNotification('✅ Notifications Enabled!',{
+          body:'You will now receive gym alerts even when the app is closed.',
+          icon:'/icon-192.png', badge:'/icon-192.png', tag:'test', vibrate:[100,50,100]
+        });
       }
-      toast('🔔 Notifications ON!','Live, expiry &amp; announcement alerts enabled.','ok');
+      toast('🔔 Notifications ON!','You will get alerts even when app is closed.','ok');
     } else {
-      toast('❌ Denied','Allow notifications in your browser.','warn');
+      toast('❌ Denied','Allow notifications in your browser/phone settings.','warn');
     }
   }
   updateBell();
