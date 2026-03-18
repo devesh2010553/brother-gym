@@ -9,12 +9,19 @@ const path     = require('path');
 const { v4: uuidv4 } = require('uuid');
 const rateLimit = require('express-rate-limit');
 const { MongoClient } = require('mongodb');
+const webpush = require('web-push');
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
 app.set('trust proxy', 1);
 app.use(cors());
 app.use(express.json());
+
+webpush.setVapidDetails(
+  "mailto:admin@brothersgym.com",
+  process.env.VAPID_PUBLIC_KEY,
+  process.env.VAPID_PRIVATE_KEY
+);
 
 // ── PWA files ────────────────────────────────────────────
 app.get('/sw.js', (req,res) => {
@@ -133,6 +140,7 @@ async function connectDB() {
   await db.collection('payments').createIndex({createdAt:-1});
   await db.collection('notifications').createIndex({time:-1});
   await db.collection('announcements').createIndex({createdAt:-1});
+  await db.collection('push_subs').createIndex({phone:1});
   await db.collection('push_queue').createIndex({createdAt:1},{expireAfterSeconds:86400});
   console.log('✅  MongoDB Atlas connected — brothers_gym database ready');
 }
@@ -706,17 +714,67 @@ app.delete('/api/announcements/:id', requireDB, async (req,res) => {
 // ════════════════════════════════════════════════════════
 async function queuePush(payload, targetPhone=null) {
   if (!db) return;
+
   try {
+
+    // Save notification in queue (backup system)
     await db.collection('push_queue').insertOne({
-      ...payload, targetPhone, createdAt:new Date(), delivered:false
+      ...payload,
+      targetPhone,
+      createdAt: new Date(),
+      delivered:false
     });
-  } catch(e) {}
+
+    const pushPayload = JSON.stringify({
+      title: payload.title || "Brothers Gym 💪",
+      body: payload.body || "",
+      type: payload.type || "info",
+      url: payload.url || "/portal"
+    });
+
+    // 👇 ADD THIS PART HERE
+    const subs = targetPhone
+      ? await db.collection('push_subs').find({ phone: targetPhone }).toArray()
+      : await db.collection('push_subs').find({}).toArray();
+
+    for (const s of subs) {
+  try {
+    if (s.subscription) {
+      await webpush.sendNotification(s.subscription, pushPayload);
+    }
+  } catch (err) {
+
+        console.log("Push error:", err.message);
+
+        // Remove expired subscriptions
+        if (err.statusCode === 410 || err.statusCode === 404) {
+          await db.collection('push_subs').deleteOne({ _id: s._id });
+        }
+
+      }
+
+    }
+
+  } catch (e) {
+
+    console.log("Queue push error:", e.message);
+
+  }
+
 }
 
 app.post('/api/push/subscribe', requireDB, async (req,res) => {
-  const {phone} = req.body;
-  if (!phone) return res.json({success:false});
-  await db.collection('push_subs').updateOne({phone},{$set:{phone,updatedAt:new Date()}},{upsert:true});
+  const {phone, subscription} = req.body;
+
+  if (!phone || !subscription)
+    return res.json({success:false});
+
+  await db.collection('push_subs').updateOne(
+    {phone},
+    {$set:{phone, subscription, updatedAt:new Date()}},
+    {upsert:true}
+  );
+
   res.json({success:true});
 });
 
@@ -728,7 +786,8 @@ app.post('/api/push/unsubscribe', requireDB, async (req,res) => {
 
 // Poll endpoint — returns undelivered messages for a specific phone
 app.get('/api/push/poll', requireDB, async (req,res) => {
-  const {phone} = req.query;
+  let {phone} = req.query;
+  phone = String(phone||'').replace(/\D/g,'').slice(-10);
   if (!phone) return res.json([]);
   try {
     const msgs = await db.collection('push_queue').find({
