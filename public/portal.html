@@ -2464,6 +2464,10 @@ function initPWA() {
           navigator.serviceWorker.controller.postMessage({type:'SAVE_SESSION',session:{phone:S.phone,id:S.id}});
         }
       }
+      // Also sync session when a new SW takes control (fresh install / update)
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        syncSession();
+      });
       navigator.serviceWorker.ready.then(async () => {
         syncSession();
         updateBell();
@@ -2520,7 +2524,11 @@ async function togglePush() {
     const r = await Notification.requestPermission();
     if (r === 'granted') {
       localStorage.setItem('_push','1');
-      if (S) await api('POST','/api/push/subscribe',{phone:S.phone||S.type});
+      // CRITICAL: call subscribePush to register the actual Web Push subscription
+      // This saves the PushSubscription object (not just phone) to the server
+      if (S?.phone) {
+        try { await subscribePush(S.phone); } catch(e) { console.warn('Push subscribe failed:', e); }
+      }
       // Register background sync
       if (swReg) {
         try { await swReg.sync.register('poll-notifications'); } catch(e) {}
@@ -2530,6 +2538,10 @@ async function togglePush() {
             if (status.state === 'granted') await swReg.periodicSync.register('gym-poll',{minInterval:30*60*1000});
           }
         } catch(e) {}
+        // Also save session to SW cache NOW so bgPoll() can find it
+        if (navigator.serviceWorker.controller && S?.phone) {
+          navigator.serviceWorker.controller.postMessage({type:'SAVE_SESSION', session:{phone:S.phone, id:S.id}});
+        }
         // Test notification
         swReg.showNotification('✅ Notifications Enabled!',{
           body:'You will now receive gym alerts even when the app is closed.',
@@ -2594,26 +2606,15 @@ function startPoll() {
   clearInterval(window._pollTimer);
   window._pollTimer = setInterval(pollPush, 30000);
   setTimeout(pollPush, 5000);
-}
-async function enablePush(phone){
-
-  const reg = await navigator.serviceWorker.ready;
-
-  const sub = await reg.pushManager.subscribe({
-    userVisibleOnly:true,
-    applicationServerKey: "YOUR_PUBLIC_VAPID_KEY"
+  // Poll immediately when tab becomes visible again (user returns to app)
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') pollPush();
   });
-
-  await fetch("/api/push/subscribe",{
-    method:"POST",
-    headers:{ "Content-Type":"application/json" },
-    body:JSON.stringify({
-      phone,
-      subscription:sub
-    })
-  });
-
+  // Poll when back online after being offline
+  window.addEventListener('online', () => pollPush());
 }
+// NOTE: Web Push subscription is handled by subscribePush() above which uses the correct VAPID key.
+// The enablePush() duplicate has been removed.
 // ════════════════════════════════════════
 //  INIT
 // ════════════════════════════════════════

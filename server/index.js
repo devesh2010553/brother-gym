@@ -141,6 +141,7 @@ async function connectDB() {
   await db.collection('notifications').createIndex({time:-1});
   await db.collection('announcements').createIndex({createdAt:-1});
   await db.collection('push_subs').createIndex({phone:1});
+  await db.collection('push_subs').createIndex({endpoint:1},{unique:true});
   await db.collection('push_queue').createIndex({createdAt:1},{expireAfterSeconds:86400});
   console.log('✅  MongoDB Atlas connected — brothers_gym database ready');
 }
@@ -710,68 +711,73 @@ app.delete('/api/announcements/:id', requireDB, async (req,res) => {
 });
 
 // ════════════════════════════════════════════════════════
-//  PUSH NOTIFICATIONS (polling-based)
+//  PUSH NOTIFICATIONS (Web Push + polling fallback)
 // ════════════════════════════════════════════════════════
 async function queuePush(payload, targetPhone=null) {
   if (!db) return;
 
   try {
+    // Normalize phone to last 10 digits (matches how poll query works)
+    const normPhone = targetPhone
+      ? String(targetPhone).replace(/\D/g,'').slice(-10) || null
+      : null;
 
-    // Save notification in queue (backup system)
+    // Generate a stable ID for dedup in SW seen-IDs cache
+    const { ObjectId } = require('mongodb');
+    const docId = new ObjectId();
+
+    // Save notification in queue (backup system — SW bgPoll reads this)
     await db.collection('push_queue').insertOne({
+      _id: docId,
       ...payload,
-      targetPhone,
+      targetPhone: normPhone,
       createdAt: new Date(),
-      delivered:false
+      delivered: false
     });
 
     const pushPayload = JSON.stringify({
+      _id: docId.toString(),   // include ID so SW can dedup
       title: payload.title || "Brothers Gym 💪",
       body: payload.body || "",
       type: payload.type || "info",
       url: payload.url || "/portal"
     });
 
-    // 👇 ADD THIS PART HERE
-    const subs = targetPhone
-      ? await db.collection('push_subs').find({ phone: targetPhone }).toArray()
+    // Send live Web Push to all subscribed devices for this phone (or all if broadcast)
+    const subs = normPhone
+      ? await db.collection('push_subs').find({ phone: normPhone }).toArray()
       : await db.collection('push_subs').find({}).toArray();
 
     for (const s of subs) {
-  try {
-    if (s.subscription) {
-      await webpush.sendNotification(s.subscription, pushPayload);
-    }
-  } catch (err) {
-
-        console.log("Push error:", err.message);
-
-        // Remove expired subscriptions
+      try {
+        if (s.subscription) {
+          await webpush.sendNotification(s.subscription, pushPayload);
+        }
+      } catch (err) {
+        console.log('Push send error:', err.statusCode, err.message);
+        // Remove expired/invalid subscriptions so we don't keep trying
         if (err.statusCode === 410 || err.statusCode === 404) {
           await db.collection('push_subs').deleteOne({ _id: s._id });
         }
-
       }
-
     }
 
   } catch (e) {
-
-    console.log("Queue push error:", e.message);
-
+    console.log('Queue push error:', e.message);
   }
-
 }
 
 app.post('/api/push/subscribe', requireDB, async (req,res) => {
-  const {phone, subscription} = req.body;
+  let {phone, subscription} = req.body;
+  phone = String(phone||'').replace(/\D/g,'').slice(-10);
 
-  if (!phone || !subscription)
-    return res.json({success:false});
+  if (!phone || !subscription || !subscription.endpoint)
+    return res.json({success:false, message:'Missing phone or subscription endpoint.'});
 
+  // Use endpoint as unique key so multiple devices per phone are all stored
   await db.collection('push_subs').updateOne(
-    {phone},
-    {$set:{phone, subscription, updatedAt:new Date()}},
+    {endpoint: subscription.endpoint},
+    {$set:{phone, subscription, endpoint: subscription.endpoint, updatedAt:new Date()}},
     {upsert:true}
   );
 
@@ -779,8 +785,9 @@ app.post('/api/push/subscribe', requireDB, async (req,res) => {
 });
 
 app.post('/api/push/unsubscribe', requireDB, async (req,res) => {
-  const {phone} = req.body;
-  if (phone) await db.collection('push_subs').deleteOne({phone});
+  let {phone} = req.body;
+  phone = String(phone||'').replace(/\D/g,'').slice(-10);
+  if (phone) await db.collection('push_subs').deleteMany({phone});
   res.json({success:true});
 });
 

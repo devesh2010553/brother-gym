@@ -19,7 +19,7 @@ self.addEventListener('activate', e => {
 
     // Start background notification polling
     try {
-      const reg = await self.registration;
+      const reg = self.registration; // NOT a Promise — no await needed
 
       if (reg.sync) {
         await reg.sync.register('poll-notifications');
@@ -32,7 +32,7 @@ self.addEventListener('activate', e => {
       }
 
     } catch(err) {
-      // ignore errors
+      // ignore — periodicSync requires browser permission
     }
 
   })());
@@ -140,9 +140,12 @@ async function bgPoll() {
 
     const sess = await sessRes.json();
     if (!sess?.phone) return;
+    // Normalize to last 10 digits to match server targetPhone format
+    const phone = String(sess.phone).replace(/\D/g,'').slice(-10);
+    if (!phone) return;
 
-    // request pending notifications
-    const res = await fetch(`/api/push/poll?phone=${encodeURIComponent(sess.phone)}`);
+    // request pending notifications — use normalized phone
+    const res = await fetch(`/api/push/poll?phone=${encodeURIComponent(phone)}`);
     if (!res.ok) return;
 
     const msgs = await res.json();
@@ -205,7 +208,12 @@ async function bgPoll() {
 self.addEventListener('notificationclick', e => {
   e.notification.close();
   const data = e.notification.data || {};
-  const url = '/portal';
+  const url = data.url || '/portal';
+  const action = e.action;
+
+  // Handle dismiss actions — just close, don't open
+  if (action === 'dismiss') return;
+
   e.waitUntil(
     clients.matchAll({type:'window', includeUncontrolled:true}).then(list => {
       for (const c of list) {
