@@ -141,7 +141,10 @@ async function connectDB() {
   await db.collection('notifications').createIndex({time:-1});
   await db.collection('announcements').createIndex({createdAt:-1});
   await db.collection('push_subs').createIndex({phone:1});
-  await db.collection('push_subs').createIndex({endpoint:1},{unique:true});
+  await db.collection('push_subs').createIndex({endpoint:1},{unique:true, sparse:true});
+  // Clean up legacy push_subs records that have no endpoint (they're unusable for Web Push)
+  await db.collection('push_subs').deleteMany({endpoint:{$exists:false}});
+  await db.collection('push_subs').deleteMany({endpoint:null});
   await db.collection('push_queue').createIndex({createdAt:1},{expireAfterSeconds:86400});
   console.log('✅  MongoDB Atlas connected — brothers_gym database ready');
 }
